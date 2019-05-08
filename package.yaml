@@ -45,6 +45,7 @@ dependencies:
 - rio
 - safe >= 0.3.11 && < 0.4
 - scientific >= 0.3.4.9 && < 0.4
+- seal-prelude
 - semigroups >= 0.18.2 && < 0.19
 - stm >= 2.4.4.1 && < 2.6
 - template-haskell
