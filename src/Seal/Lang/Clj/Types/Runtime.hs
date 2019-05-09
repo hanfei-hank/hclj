@@ -33,6 +33,7 @@ module Seal.Lang.Clj.Types.Runtime
 
 import Seal.Prelude 
 import GHC.TypeLits
+import Data.Generics.Product.Typed
 import qualified Data.HashMap.Strict as HM
 
 import Seal.Lang.Common.Type
@@ -89,15 +90,28 @@ updateRefStore RefState {..}
 
 class HasEval env where
   getRefStore :: RIO env RefStore
+  default getRefStore :: HasType RefStore env => RIO env RefStore
+  getRefStore = view typed
 
   getRefState :: RIO env RefState
+  default getRefState :: HasType (IORef RefState) env => RIO env RefState
+  getRefState = view typed >>= readIORef
+
   modifyRefState :: (RefState -> RefState) -> RIO env ()
+  default modifyRefState :: HasType (IORef RefState) env => (RefState -> RefState) -> RIO env ()
+  modifyRefState f = view typed >>= \ref -> modifyIORef ref f
 
   getCallStack :: RIO env [StackFrame]
+  default getCallStack :: HasType (IORef [StackFrame]) env => RIO env [StackFrame]
+  getCallStack = view typed >>= readIORef
+
   modifyCallStack :: ([StackFrame] -> [StackFrame]) -> RIO env ()
+  default modifyCallStack :: HasType (IORef [StackFrame]) env => ([StackFrame] -> [StackFrame]) -> RIO env ()
+  modifyCallStack f = view typed >>= \ref -> modifyIORef ref f
 
   -- report error, with category
   throwEvalErr :: KnownSymbol n => Proxy n -> Info -> Text -> RIO env a
+  throwEvalErr _ _ m = throwString $ toString m
 
 etEvalError :: Proxy "EvalError"; etEvalError = Proxy
 etArgsError :: Proxy "ArgsError"; etArgsError = Proxy

@@ -33,6 +33,7 @@ dependencies:
 - data-default >= 0.7.1.1 && < 0.8
 - deepseq >= 1.4.2.0 && < 1.5
 - exceptions >= 0.8.3 && < 0.11
+- generic-lens
 - hashable >= 1.2.4.0 && < 1.3
 - lens >= 4.14 && <= 4.18
 - lens-aeson >= 1.0.0.5 && < 1.1
@@ -75,10 +76,12 @@ library:
   dependencies: []
   default-extensions:
   - BangPatterns
+  - DefaultSignatures
   - DeriveGeneric
   - DeriveFoldable
   - DeriveFunctor
   - DeriveTraversable
+  - FlexibleContexts
   - FlexibleInstances
   - GeneralizedNewtypeDeriving
   - LambdaCase

@@ -14,18 +14,10 @@ data SimpleCljEnv = SimpleCljEnv {
     eRefStore :: !RefStore
   , eRefState :: IORef RefState
   , eCallStack :: IORef [StackFrame]
-}
+} deriving (Generic)
 
-instance HasEval SimpleCljEnv where
-  getRefStore = asks eRefStore
+instance HasEval SimpleCljEnv
 
-  getRefState = asks eRefState >>= readIORef
-  modifyRefState f = asks eRefState >>= \ref -> modifyIORef ref f
-
-  getCallStack = asks eCallStack >>= readIORef
-  modifyCallStack f = asks eCallStack >>= \ref -> modifyIORef ref f
-
-  throwEvalErr _ _ m = throwString $ toString m
 
 type Repl a = RIO SimpleCljEnv a
 
