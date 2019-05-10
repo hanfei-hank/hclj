@@ -14,6 +14,7 @@ import Seal.Lang.Clj.Types.Runtime (argsError)
 import Seal.Lang.Clj.Types.Term
 import Seal.Lang.Clj.Parse
 import Seal.Lang.Clj.Compile (parseCompile)
+import Seal.Lang.Clj.Native.Internal
 
 exps :: QuasiQuoter
 exps = QuasiQuoter {
@@ -65,7 +66,7 @@ makeNativeModule :: String -> [TH.Name] -> DecsQ
 makeNativeModule name ns = do
   let toDefE n = varE $ rename' n (++ "Def")
   let body = [| ($(stringE name), $(listE $ map toDefE ns)) |]
-      mn = mkName $ "module" ++ name
+      mn = mkName $ name ++ "Module"
   defs <- makeNativeDef ns
   sequence [funD mn [clause [] (normalB body) (map return defs)]]
 
