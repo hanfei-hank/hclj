@@ -309,46 +309,7 @@ letForm = do
         TBinding [binding] scope BindLet <$> contextInfo
       nest [] =  syntaxError "letForm: invalid state (bug)"
   nest bindings
-
--- useForm :: Compile (Term Name)
--- useForm = do
---   modName <- (_atomAtom <$> userAtom) <|> str <|> expected "bare atom, string, symbol"
---   TUse (ModuleName modName) <$> optional hash' <*> contextInfo
-
-{--
-nsForm :: Compile (Term Name)
-nsForm = do
-  modName' <- _atomAtom <$> userAtom
-  --如果是用户合约，则直接用ns名称作key
-  keyset <- if modName' == "Token" then do
-              keyset' <- str
-              return keyset'
-            else do 
-              syntaxError "ns: not support custom contract"
-              -- let ts = T.split (=='.') modName'
-              -- return (head ts)
-  m <- meta ModelAllowed
-  use (psUser . csModule) >>= \case
-    Just {} -> syntaxError "Invalid nested contract or interface"
-    Nothing -> return ()
-  i <- contextInfo
-  let code = case i of
-        Info Nothing -> "<code unavailable>"
-        Info (Just (c,_)) -> c
-      modName = ModuleName modName'
-      modHash = hash $ encodeUtf8 $ _unCode code
-      blessed = HS.fromList []
-  (psUser . csModule) .= Just (modName,modHash)
-  return $ TModule
-    (Module modName (KeySetName keyset) m code modHash blessed [])
-    (abstract (const Nothing) (TList [] TyAny i)) i
---}
-
--- hash' :: Compile Hash
--- hash' = str >>= \s -> case fromText' s of
---   Right h -> return h
---   Left e -> syntaxError $ "bad hash: " ++ e
-
+  
 typedAtom :: Compile (AtomExp Info,Type (Term Name))
 typedAtom = flip (,) <$> (typed <|> freshTyVar) <*> userAtom
 

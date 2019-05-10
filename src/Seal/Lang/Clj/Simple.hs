@@ -48,7 +48,7 @@ makeRepl ns =
     let exps' = do
           exps <- parseString exprsOnly src
           let ei = fmap (mkStringInfo src <$>) exps
-          mapLeft show $ compile $ fmap cmdExpTransfer ei
+          mapLeft show $ compile ei
 
     case exps' of
       Left err -> putStrLn err
@@ -63,23 +63,9 @@ makeRepl ns =
       )
       $ \(e :: SomeException) -> print e
 
-  data Clj m = Clj {
-      evalClj :: String -> m ()
-  }
-
-  new :: IO (Clj IO)
+  new :: IO (String -> IO ())
   new = do
       env <- newSimpleCljEnv 
-      return $ Clj $ \src -> runRIO env (evalString src)
+      return $ \src -> runRIO env (evalString src)
 
-  -- 将命令行参数转换成clj表达式
-  cmdExpTransfer :: Exp i -> Exp i
-  cmdExpTransfer = go
-    where
-      go' (EAtom (AtomExp n qs i)) = ELiteral (LiteralExp (LString n) i)
-      go' e = go e
-      go (EList (ListExp (e:es) Parens i2)) = 
-          EList (ListExp (e: fmap go' es) Parens i2)
-      go e = e
-      
   |]
