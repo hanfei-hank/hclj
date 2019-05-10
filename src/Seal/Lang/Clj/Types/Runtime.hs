@@ -68,7 +68,12 @@ data RefStore = RefStore {
     , _rsModules :: HM.HashMap ModuleName ModuleData
     } deriving (Eq, Show)
 makeLenses ''RefStore
-instance Default RefStore where def = RefStore HM.empty HM.empty
+
+instance Semigroup RefStore where
+  (RefStore n1 m1) <> (RefStore n2 m2) = RefStore (n1 <> n2) (m1 <> m2)
+
+instance Monoid RefStore where
+  mempty = RefStore mempty mempty
 
 -- | Dynamic storage for namespace-loaded modules, and new modules compiled in current tx.
 data RefState = RefState {
