@@ -80,7 +80,6 @@ loadModule m@Module{..} bod1 mi = do
         HM.fromList <$> foldM doDef [] bd
       t -> evalError (_tInfo t) "Malformed contract"
   evaluatedDefs <- evaluateDefs mi modDefs1
-  evaluateConstraints mi m evaluatedDefs
   let md = ModuleData m $ filterOutPrivateDefs modDefs1 evaluatedDefs
   installModule md
   modifyRefState $ rsNewModules %~ HM.insert _mName md
@@ -127,17 +126,6 @@ traverseGraph defs = fmap stronglyConnCompR $ forM (HM.toList defs) $ \(dn,d) ->
           Nothing -> evalError (_nInfo f) $ "Cannot resolve \"" ++ show f ++ "\""
       (Nothing, _) -> evalError (_nInfo f) $ "cannot resolve \"" ++ show f ++ "\""
   return (d', dn, mapMaybe (either Just (const Nothing)) $ toList d')
-
--- | Evaluate interface constraints in contract.
-evaluateConstraints :: HasEval env => Info -> Module -> HM.HashMap Text Ref -> RIO env ()
-evaluateConstraints info Module{..} evalMap = foldMap evaluateConstraint _mInterfaces
-  where
-    evaluateConstraint ifn = do
-      irefs <- preview (rsModules . ix ifn . mdRefMap) <$> getRefStore
-      case irefs of
-        Nothing -> evalError info $
-          "Interface implemented in contract, but not defined: <" ++ toString ifn ++ ">"
-        Just irefs' -> HM.foldrWithKey (solveConstraint info evalMap) (pure ()) irefs'
 
 -- | Compare implemented member signatures with their definitions.
 -- At this stage, we have not merged consts, so we still check for overlap

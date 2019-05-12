@@ -21,6 +21,7 @@ module Seal.Lang.Clj.Types.Exp
    Separator(..),
    Meta(..),
    Compile, Cursor,
+   Module(..),
    ) where
 
 
@@ -185,3 +186,15 @@ instance Default Meta where def = Meta def def
 type Compile a = C.ExpParse Exp CompileState a
 
 type Cursor = C.Cursor Exp
+
+-- TODO: We need a more expressive, safer ADT for this.
+data Module
+  = Module
+  { _mName :: !ModuleName
+  , _mMeta :: !Meta
+  , _mCode :: !Code
+  } deriving Eq
+
+instance Show Module where
+  show m = case m of
+    Module{..} -> "(Contract " ++ toString _mName ++ " '" ++ ")"

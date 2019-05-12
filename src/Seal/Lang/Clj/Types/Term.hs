@@ -20,7 +20,7 @@ module Seal.Lang.Clj.Types.Term
    Ref(..),
    NativeDFun(..),
    BindType(..),
-   Module(..),mName,mMeta,mCode,mInterfaces,
+   Module(..),mName,mMeta,mCode,
    ModuleName(..),
    Name(..),
    ConstVal(..),

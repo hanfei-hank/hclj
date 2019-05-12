@@ -7,7 +7,7 @@
 
 module Seal.Lang.Clj.TH.Term where
 
-import Seal.TH hiding (Info, Exp, Name, Type)
+import Seal.TH hiding (Info, Exp, Module, Name, Type)
 
 import Seal.Prelude hiding ((.=))
 import Control.Arrow ((***))
@@ -84,35 +84,7 @@ termQ =
   instance Eq1 BindType where
     liftEq _ BindLet BindLet = True
 
-  -- TODO: We need a more expressive, safer ADT for this.
-  data Module
-    = Module
-    { _mName :: !ModuleName
-    , _mMeta :: !Meta
-    , _mCode :: !Code
-    , _mInterfaces :: [ModuleName]
-    } deriving Eq
-
-  instance Show Module where
-    show m = case m of
-      Module{..} -> "(Contract " ++ toString _mName ++ " '" ++ ")"
-
                       
-  data ConstVal n =
-    CVRaw { _cvRaw :: !n } |
-    CVEval { _cvRaw :: !n
-          , _cvEval :: !n }
-    deriving (Eq,Functor,Foldable,Traversable,Generic)
-
-  instance Show o => Show (ConstVal o) where
-    show (CVRaw r) = show r
-    show (CVEval _ e) = show e
-
-  instance Eq1 ConstVal where
-    liftEq eq (CVRaw a) (CVRaw b) = eq a b
-    liftEq eq (CVEval a c) (CVEval b d) = eq a b && eq c d
-    liftEq _ _ _ = False
-
 
   -- | clj evaluable term.
   data Term n =

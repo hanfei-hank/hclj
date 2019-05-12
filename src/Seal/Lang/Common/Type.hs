@@ -15,13 +15,15 @@ module Seal.Lang.Common.Type
    renderInfo,
    renderParsed,
    HasInfo(..),
-   MkInfo, mkEmptyInfo, mkStringInfo, mkTextInfo
+   MkInfo, mkEmptyInfo, mkStringInfo, mkTextInfo,
+   ConstVal(..),
    ) where
 
 
 import qualified Text.Trifecta.Delta as TF
 import Text.Trifecta.Delta hiding (Columns)
 import Seal.Prelude
+import Data.Functor.Classes
 import Data.Text (Text,unpack)
 import qualified Data.Text as T
 import qualified Text.PrettyPrint.ANSI.Leijen as PP
@@ -148,3 +150,19 @@ mkStringInfo s d = Info (Just (fromString $ take (_pLength d) $
 mkTextInfo :: T.Text -> MkInfo
 mkTextInfo s d = Info (Just (Code $ T.take (_pLength d) $
                              T.drop (fromIntegral $ TF.bytes d) s,d))
+
+
+data ConstVal n =
+  CVRaw { _cvRaw :: !n } |
+  CVEval { _cvRaw :: !n
+        , _cvEval :: !n }
+  deriving (Eq,Functor,Foldable,Traversable,Generic)
+
+instance Show o => Show (ConstVal o) where
+  show (CVRaw r) = show r
+  show (CVEval _ e) = show e
+
+instance Eq1 ConstVal where
+  liftEq eq (CVRaw a) (CVRaw b) = eq a b
+  liftEq eq (CVEval a c) (CVEval b d) = eq a b && eq c d
+  liftEq _ _ _ = False

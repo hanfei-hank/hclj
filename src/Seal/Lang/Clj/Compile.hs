@@ -96,7 +96,7 @@ ns = do
         Info (Just (c,_)) -> c
       modName = ModuleName modName'
   return $ TModule
-    (Module modName m code [])
+    (Module modName m code)
     (abstract (const Nothing) (TList cs TyAny i)) i
   where
     nsDecl = do
