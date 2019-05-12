@@ -49,7 +49,7 @@ defAddTime = defRNative "add-time" addTime
     addTime i as = argsError i as
 
     doTimeAdd :: UTCTime -> Decimal -> Term Name
-    doTimeAdd t r = toTerm (t .+^ fromSeconds r)
+    doTimeAdd t r = toTerm $ toLiteral (t .+^ fromSeconds r)
 
 defFormatTime :: HasEval env => NativeDef env
 defFormatTime = defRNative "format-time" formatTime'
@@ -59,7 +59,7 @@ defFormatTime = defRNative "format-time" formatTime'
   where
 
     formatTime' _ [TLitString fmt,TLiteral (LTime t) _] =
-      return $ toTerm $ toText $ formatTime defaultTimeLocale (toString fmt) t
+      return $ tStr $ toText $ formatTime defaultTimeLocale (toString fmt) t
     formatTime' i as = argsError i as
 
 parseTimeDef :: HasEval env => NativeDef env
@@ -122,10 +122,10 @@ timeDefs = ("Time", defs)
 
 
 diffTime :: HasEval env => RNativeFun env
-diffTime _ [TLiteral (LTime t1) _,TLiteral (LTime t2) _] = return $ toTerm (toSeconds (t1 .-. t2) :: Decimal)
+diffTime _ [TLiteral (LTime t1) _,TLiteral (LTime t2) _] = return $ toTerm $ toLiteral (toSeconds (t1 .-. t2) :: Decimal)
 diffTime i as = argsError i as
 
 timeMult :: HasEval env => Decimal -> RNativeFun env
-timeMult m _ [TLitInteger n] = return $ toTerm (fromIntegral n * m)
-timeMult m _ [TLiteral (LDecimal d) _] = return $ toTerm (d * m)
+timeMult m _ [TLitInteger n] = return $ toTerm $ toLiteral (fromIntegral n * m)
+timeMult m _ [TLiteral (LDecimal d) _] = return $ toTerm $ toLiteral (d * m)
 timeMult _ i as = argsError i as

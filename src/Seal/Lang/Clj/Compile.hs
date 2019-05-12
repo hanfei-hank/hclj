@@ -38,7 +38,7 @@ import Seal.Lang.Clj.Types.Type
 import Seal.Lang.Clj.Parse (exprsOnly, parseString)
 
 initParseState :: Maybe ModuleName -> Exp Info -> ParseState Exp CompileState
-initParseState name e = ParseState e $ CompileState 0 name \_ -> expected "special form"
+initParseState name e = ParseState e $ CompileState 0 name 
 
 reserved :: [Text]
 reserved = T.words "use defn true false let def ns"
@@ -137,7 +137,6 @@ userAtom = do
 
 specialForm :: Compile (Term Name)
 specialForm = do
-  sf <- use $ psUser . csSpecialFormC
   vatom <- bareAtom 
   return vatom >>= \AtomExp{..} -> case _atomAtom of
     -- "use" -> commit >> useForm
@@ -147,7 +146,8 @@ specialForm = do
     -- "deftable" -> commit >> deftable
     -- "defn" -> commit >> defn PUBLIC
     -- "defn-" -> commit >> defn PRIVATE
-    _ -> sf _atomAtom
+    -- _ -> sf _atomAtom
+    _ -> expected "special form"
 
 expToTerm :: AtomExp Info -> Term Name
 expToTerm AtomExp{..} = TVar (Name _atomAtom _atomInfo) _atomInfo
@@ -155,24 +155,8 @@ expToTerm AtomExp{..} = TVar (Name _atomAtom _atomInfo) _atomInfo
 app :: Compile (Term Name)
 app = do
   v <- varAtom
-  body <- P.many (term <|> bindingForm)
+  body <- P.many (term)
   TApp v body <$> contextInfo
-
--- | Bindings (`{ "column" := binding }`) do not syntactically scope the
--- following body form as a sexp, instead letting the body contents
--- simply follow, showing up as more args to the containing app. Thus, once a
--- binding is encountered, all following terms are subsumed into the
--- binding body, and bound/abstracted etc.
-bindingForm :: Compile (Term Name)
-bindingForm = do
-  let pair = do
-        a <-  arg
-        col <- term
-        return (a,col)
-  (bindings,bi) <- withList' Braces $
-    (,) <$> P.many pair <*> contextInfo
-  TBinding bindings <$> abstractBody (map fst bindings) <*>
-    pure (BindSchema TyAny) <*> pure bi
 
 varAtom :: Compile (Term Name)
 varAtom = do

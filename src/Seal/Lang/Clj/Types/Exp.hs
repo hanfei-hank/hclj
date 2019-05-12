@@ -11,14 +11,16 @@
 
 module Seal.Lang.Clj.Types.Exp
  (
-   Literal(..),
+   Literal(..), ToLiteral(..),
    _LString,_LInteger,_LDecimal,_LBool,_LTime,_LKeyword,
    simpleISO8601,formatLTime,
    litToPrim,
    LiteralExp(..),AtomExp(..),ListExp(..),SeparatorExp(..),
    Exp(..),_ELiteral,_EAtom,_EList,_ESeparator,
    ListDelimiter(..),listDelims,enlist,
-   Separator(..)
+   Separator(..),
+   Meta(..),
+   Compile, Cursor,
    ) where
 
 
@@ -32,6 +34,7 @@ import Data.Decimal
 import Seal.Lang.Common.Type
 import Seal.Lang.Clj.Types.Type
 
+import qualified Seal.Lang.Common.Compiler as C
 
 data Literal =
     LString { _lString :: !Text } |
@@ -46,6 +49,19 @@ data Literal =
 instance NFData Literal
 
 makePrisms ''Literal
+
+class ToLiteral a where
+  toLiteral :: a -> Literal
+
+instance ToLiteral Bool where toLiteral = LBool
+instance ToLiteral Integer where toLiteral = LInteger
+instance ToLiteral Int where toLiteral = LInteger . fromIntegral
+instance ToLiteral Decimal where toLiteral = LDecimal
+instance ToLiteral Text where toLiteral = LString
+instance ToLiteral String where toLiteral s = case s of 
+                                          (':':xs) ->  LKeyword $ pack xs 
+                                          _        ->  LString $ pack s
+instance ToLiteral UTCTime where toLiteral = LTime
 
 -- | ISO8601 Thyme format
 simpleISO8601 :: String
@@ -159,3 +175,13 @@ instance Show (Exp i) where
     EList l -> show l
     ESeparator s -> show s
 
+
+data Meta = Meta
+  { _mDocs  :: !(Maybe Text) -- ^ docs
+  , _mModel :: ![Exp Info]   -- ^ model
+  } deriving (Eq, Show, Generic)
+instance Default Meta where def = Meta def def
+
+type Compile a = C.ExpParse Exp CompileState a
+
+type Cursor = C.Cursor Exp

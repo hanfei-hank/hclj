@@ -37,7 +37,7 @@ type RNativeFun env = FunApp -> [Term Name] -> RIO env (Term Name)
 type NativeDef env = (NativeDefName,Bool,NativeFun env, FunTypes (Term Name), Text)
 type NativeModule env = (ModuleName,[NativeDef env])
 success :: Functor m => Text -> m a -> m (Term Name)
-success = fmap . const . toTerm
+success = fmap . const . tStr
 
 
 

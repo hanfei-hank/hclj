@@ -66,7 +66,7 @@ listA = mkTyVar "a" [TyList (mkTyVar "l" []),TyPrim TyString,TySchema TyObject (
 
 cljVersionDef :: HasEval env => NativeDef env
 cljVersionDef = setTopLevelOnly $ defRNative "seal-version"
-  (\_ _ -> return $ toTerm cljVersion)
+  (\_ _ -> return $ toTerm $ toLiteral cljVersion)
   (funType tTyString [])
   "Obtain current seal build version. `(seal-version)`"
 
@@ -253,9 +253,9 @@ reverse' _ [l@TList{}] = return $ over tList reverse l
 reverse' i as = argsError i as
 
 empty' :: HasEval env => RNativeFun env
-empty' _i [TList ls _ _] = return $ toTerm $ length ls <= 0
-empty' _i [TObject ps _ _] = return $ toTerm $ length ps <= 0
-empty' _i [TLitString s] = return $ toTerm $ (length $ toString s) <= 0
+empty' _i [TList ls _ _] = return $ toTerm $ toLiteral $ length ls <= 0
+empty' _i [TObject ps _ _] = return $ toTerm $ toLiteral $ length ps <= 0
+empty' _i [TLitString s] = return $ toTerm $ toLiteral $ (length $ toString s) <= 0
 empty' i as = argsError i as
 
 
@@ -279,14 +279,14 @@ filter' i [app@TApp {},l] = reduce l >>= \l' -> case l' of
 filter' i as = argsError' i as
 
 count' :: HasEval env => RNativeFun env
-count' _ [TList ls _ _] = return $ toTerm (length ls)
-count' _ [TLitString s] = return $ toTerm (T.length s)
-count' _ [TObject ps _ _] = return $ toTerm (length ps)
+count' _ [TList ls _ _] = return $ toTerm $ toLiteral (length ls)
+count' _ [TLitString s] = return $ toTerm $ toLiteral (T.length s)
+count' _ [TObject ps _ _] = return $ toTerm $ toLiteral (length ps)
 count' i as = argsError i as
 
 take' :: HasEval env => RNativeFun env
 take' _ [TLitInteger c,TList l t _] = return $ TList (tord take c l) t def
-take' _ [TLitInteger c,TLitString l] = return $ toTerm $ toText $ tord take c (toString l)
+take' _ [TLitInteger c,TLitString l] = return $ toTerm $ toLiteral $ toText $ tord take c (toString l)
 take' _ [l@TList {},TObject {..}] =
   return $ toTObject _tObjectType def $ (`filter` _tObject) $ \(k,_) -> searchTermList k (_tList l)
 
@@ -294,7 +294,7 @@ take' i as = argsError i as
 
 drop' :: HasEval env => RNativeFun env
 drop' _ [TLitInteger c,TList l t _] = return $ TList (tord drop c l) t def
-drop' _ [TLitInteger c,TLitString l] = return $ toTerm $ toText $ tord drop c (toString l)
+drop' _ [TLitInteger c,TLitString l] = return $ toTerm $ toLiteral $ toText $ tord drop c (toString l)
 drop' _ [l@TList {},TObject {..}] =
   return $ toTObject _tObjectType def $ (`filter` _tObject) $ \(k,_) -> not $ searchTermList k (_tList l)
 drop' i as = argsError i as
@@ -451,7 +451,7 @@ typeof'' i as = argsError i as
 listModules :: HasEval env => RNativeFun env
 listModules _ _ = do
   mods <- view rsModules <$> getRefStore
-  return $ toTermList tTyString $ map toText $ M.keys mods
+  return $ toTermList tTyString $ map (toLiteral . toText) $ M.keys mods
 
 unsetInfo :: Term a -> Term a
 unsetInfo a' = set tInfo def a'
@@ -486,9 +486,9 @@ sort' i as = argsError i as
 
 enforceVersion :: HasEval env => RNativeFun env
 enforceVersion i as = case as of
-  [TLitString minVersion] -> doMin minVersion >> return (toTerm True)
+  [TLitString minVersion] -> doMin minVersion >> return (toTerm $ toLiteral True)
   [TLitString minVersion,TLitString maxVersion] ->
-    doMin minVersion >> doMax maxVersion >> return (toTerm True)
+    doMin minVersion >> doMax maxVersion >> return (toTerm $ toLiteral True)
   _ -> argsError i as
   where
     doMin = doMatch "minimum" (>) (<)
@@ -509,12 +509,12 @@ enforceVersion i as = case as of
 
 
 contains :: HasEval env => RNativeFun env
-contains _i [TList {..}, val] = return $ toTerm $ searchTermList val _tList
-contains _i [TObject {..}, k] = return $ toTerm $ foldl search False _tObject
+contains _i [TList {..}, val] = return $ toTerm $ toLiteral $ searchTermList val _tList
+contains _i [TObject {..}, k] = return $ toTerm $ toLiteral $ foldl search False _tObject
   where
     search True _ = True
     search _ (t, _) = t `termEq` k
-contains _i [TLitString t, TLitString s] = return $ toTerm $ T.isInfixOf s t
+contains _i [TLitString t, TLitString s] = return $ toTerm $ toLiteral $ T.isInfixOf s t
 contains i as = argsError i as
 
 
@@ -545,7 +545,7 @@ strToInt i as =
         if T.length txt <= 128
         then case baseStrToInt base' txt of
           Left _ -> argsError i as
-          Right n -> return (toTerm n)
+          Right n -> return (toTerm $ toLiteral n)
         else evalError' i $ "Invalid input: unsupported string length: " ++ (toString txt)
       else evalError' i $ "Invalid input: supplied string is not hex: " ++ (toString txt)
 

@@ -149,7 +149,7 @@ argsError :: HasEval env => FunApp -> [Term Name] -> RIO env a
 argsError i as = throwArgsError i as "Invalid arguments"
 
 argsError' :: HasEval env => FunApp -> [Term Ref] -> RIO env a
-argsError' i as = throwArgsError i (map (toTerm.toText.abbrev) as) "Invalid arguments"
+argsError' i as = throwArgsError i (map (tStr.toText.abbrev) as) "Invalid arguments"
 
 
 resolveRef :: HasEval env => Name -> RIO env (Maybe Ref)

@@ -5,7 +5,8 @@ module Seal.Lang.Clj.Simple where
 
 import Seal.Prelude
 import qualified Seal.Prelude.Unsafe as Unsafe
-import qualified Seal.Prelude.TH as TH
+import Seal.TH (merge, (.<))
+import qualified Seal.TH as TH
 import Seal.Lang.Clj.Types.Runtime
 import Seal.Lang.Clj.Compile
 import Seal.Lang.Clj.Eval

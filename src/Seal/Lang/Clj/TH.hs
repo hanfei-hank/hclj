@@ -7,7 +7,7 @@ module Seal.Lang.Clj.TH (
 
 import Universum hiding (Type)
 import qualified Universum.Unsafe as Unsafe
-import Seal.Prelude.TH as TH
+import Seal.TH as TH
 
 import Seal.Lang.Clj.Types.Exp
 import Seal.Lang.Clj.Types.Runtime (argsError)
@@ -109,3 +109,5 @@ nativeFunType ts = do
   let pt = map (\t -> [|("p", $(nativeType t))|]) $ Unsafe.init ts
       rt = Unsafe.last ts
   appExp [[| funType |], nativeReturnType rt, listE pt]
+
+

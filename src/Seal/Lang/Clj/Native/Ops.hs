@@ -53,7 +53,7 @@ modDef =
     "X modulo Y. `(mod 13 8)`"
   where
     -- mod' :: RNativeFun 
-    mod' _ [TLitInteger a, TLitInteger b] = return $ toTerm $ a `mod` b
+    mod' _ [TLitInteger a, TLitInteger b] = return $ toTerm $ toLiteral $ a `mod` b
     mod' i as = argsError i as
 
 addDef :: HasEval env => NativeDef env
@@ -104,8 +104,8 @@ subDef =
     "Negate X, or subtract Y from X. `(- 1.0)` `(- 3 2)`"
   where
     -- minus :: RNativeFun 
-    minus _ [TLiteral (LInteger n) _] = return (toTerm (negate n))
-    minus _ [TLiteral (LDecimal n) _] = return (toTerm (negate n))
+    minus _ [TLiteral (LInteger n) _] = return (toTerm $ toLiteral (negate n))
+    minus _ [TLiteral (LDecimal n) _] = return (toTerm $ toLiteral (negate n))
     minus i as@[_, _] = binop' (-) (-) i as
     minus i (x:y:zs) = do
       x' <- minus i [x, y]
@@ -178,8 +178,8 @@ absDef =
     "Absolute value of X. `(abs (- 10 23))`"
   where
     -- abs' :: RNativeFun 
-    abs' _ [TLitInteger a] = return $ toTerm $ abs a
-    abs' _ [TLiteral (LDecimal n) _] = return $ toTerm $ abs n
+    abs' _ [TLitInteger a] = return $ toTerm $ toLiteral $ abs a
+    abs' _ [TLiteral (LDecimal n) _] = return $ toTerm $ toLiteral $ abs n
     abs' i as = argsError i as
 
 roundDef :: HasEval env => NativeDef env
@@ -258,11 +258,11 @@ notDef =
                 reduce v' >>= \v ->
                     apply' app [v] >>= \r ->
                         case r of
-                            TLitBool b -> return $ toTerm $ not b
+                            TLitBool b -> return $ toTerm $ toLiteral $ not b
                             _ -> delegateError "not" app r
             [v'] ->
                 reduce v' >>= \case
-                    TLitBool b -> return $ toTerm $ not b
+                    TLitBool b -> return $ toTerm $ toLiteral $ not b
                     _ -> argsError' i as
             _ -> argsError' i as
 
@@ -341,11 +341,11 @@ defTrunc n desc op =
      " 100.15234 2)`")
   where
     -- fun :: RNativeFun 
-    fun _ [TLiteral (LDecimal d) _] = return $ toTerm $ op d
+    fun _ [TLiteral (LDecimal d) _] = return $ toTerm $ toLiteral $ op d
     fun i [TLiteral (LDecimal d) _, TLitInteger p]
       | p >= 0 =
         let p10 = (10 ^ p :: Decimal)
-         in return $ toTerm (fromIntegral (op (d * p10)) / p10)
+         in return $ toTerm $ toLiteral (fromIntegral (op (d * p10)) / p10)
       | otherwise = evalError' i "Negative precision not allowed"
     fun i as = argsError i as
 
@@ -362,25 +362,25 @@ defLogic n bop shortC =
       _      -> argsError' i as
   -- logicFun' :: [Term Ref] -> Eval (Maybe (Term Name))
   logicFun' [a] = reduce a >>= \case
-    TLitBool x -> return $ Just $ toTerm x
+    TLitBool x -> return $ Just $ toTerm $ toLiteral x
     _          -> return Nothing
   logicFun' (a : xs) = logicFun' [a] >>= \case
     Just (TLitBool x)
-      | x == shortC -> return $ Just $ toTerm x
+      | x == shortC -> return $ Just $ toTerm $ toLiteral x
       | otherwise -> logicFun' xs >>= \case
-        Just (TLitBool y) -> return $ Just $ toTerm $ x `bop` y
+        Just (TLitBool y) -> return $ Just $ toTerm $ toLiteral $ x `bop` y
         _                 -> return Nothing
     _ -> return Nothing
   logicFun' _ = return Nothing
   -- liftFun' :: [Term Ref] -> Term Name -> Eval (Maybe (Term Name))
   liftFun' [x] v = apply' x [v] >>= \v' -> case v' of
-    TLitBool ab -> return $ Just $ toTerm ab
+    TLitBool ab -> return $ Just $ toTerm $ toLiteral ab
     _           -> delegateError (show n) x v'
   liftFun' (x : xs) v = liftFun' [x] v >>= \case
     Just (TLitBool ab)
-      | ab == shortC -> return $ Just $ toTerm shortC
+      | ab == shortC -> return $ Just $ toTerm $ toLiteral shortC
       | otherwise -> liftFun' xs v >>= \case
-          Just (TLitBool bb) -> return $ Just $ toTerm $ bop ab bb
+          Just (TLitBool bb) -> return $ Just $ toTerm $ toLiteral $ bop ab bb
           _                  -> return Nothing
     _ -> return Nothing
   liftFun' _ _ = return Nothing
@@ -396,7 +396,7 @@ delegateError desc app r =
 
 
 eq :: HasEval env => (Bool -> Bool) -> RNativeFun env
-eq f _ [a, b] = return $ toTerm $ f (a `termEq` b)
+eq f _ [a, b] = return $ toTerm $ toLiteral $ f (a `termEq` b)
 eq _ i as = argsError i as
 
 {-# INLINE eq #-}
@@ -425,7 +425,7 @@ cmp cmpFun fi as@[TLiteral a _, TLiteral b _] = do
       (LString i, LString j) -> return $ i `compare` j
       (LTime i, LTime j) -> return $ i `compare` j
       _ -> argsError fi as
-  return $ toTerm (cmpFun c)
+  return $ toTerm $ toLiteral (cmpFun c)
 cmp _ fi as = argsError fi as
 
 {-# INLINE cmp #-}
@@ -447,10 +447,10 @@ binop dop iop fi as@[TLiteral a _, TLiteral b _] = do
   let hdl (Right v) = return v
       hdl (Left err) = evalError' fi $ err <> ": " <> show (a, b)
   case (a, b) of
-    (LInteger i, LInteger j) -> hdl $ fmap toTerm (i `iop` j)
-    (LDecimal i, LDecimal j) -> hdl $ fmap toTerm (i `dop` j)
-    (LInteger i, LDecimal j) -> hdl $ fmap toTerm (fromIntegral i `dop` j)
-    (LDecimal i, LInteger j) -> hdl $ fmap toTerm (i `dop` fromIntegral j)
+    (LInteger i, LInteger j) -> hdl $ fmap (toTerm . toLiteral) (i `iop` j)
+    (LDecimal i, LDecimal j) -> hdl $ fmap (toTerm . toLiteral) (i `dop` j)
+    (LInteger i, LDecimal j) -> hdl $ fmap (toTerm . toLiteral) (fromIntegral i `dop` j)
+    (LDecimal i, LInteger j) -> hdl $ fmap (toTerm . toLiteral) (i `dop` fromIntegral j)
     _ -> argsError fi as
 binop _ _ fi as = argsError fi as
 
@@ -481,6 +481,6 @@ liftIntF ::
 liftIntF f a b = Right $ f2Int (int2F a `f` int2F b)
 
 unopd :: HasEval env => (Double -> Double) -> RNativeFun env
-unopd op _ [TLitInteger i] = return $ toTerm $ f2Dec $ op $ int2F i
-unopd op _ [TLiteral (LDecimal n) _] = return $ toTerm $ f2Dec $ op $ dec2F n
+unopd op _ [TLitInteger i] = return $ toTerm $ toLiteral $ f2Dec $ op $ int2F i
+unopd op _ [TLiteral (LDecimal n) _] = return $ toTerm $ toLiteral $ f2Dec $ op $ dec2F n
 unopd _ i as = argsError i as

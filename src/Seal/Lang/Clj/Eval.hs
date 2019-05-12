@@ -196,8 +196,8 @@ reduce (TApp f as ai) = reduceApp f as ai
 reduce (TVar t _) = deref t
 reduce t@TLiteral {} = unsafeReduce t
 reduce TList {..} = TList <$> mapM reduce _tList <*> traverse reduce _tListType <*> pure _tInfo
-reduce t@TDef {} = return $ toTerm $ toText $ show t
-reduce t@TNative {} = return $ toTerm $ toText $ show t
+reduce t@TDef {} = return $ tStr $ toText $ show t
+reduce t@TNative {} = return $ tStr $ toText $ show t
 reduce TConst {..} = case _tConstVal of
   CVEval _ t -> reduce t
   CVRaw a -> evalError _tInfo $ "internal error: reduce: unevaluated const: " ++ show a
@@ -205,7 +205,6 @@ reduce (TObject ps t i) =
   TObject <$> forM ps (\(k,v) -> (,) <$> reduce k <*> reduce v) <*> traverse reduce t <*> pure i
 reduce (TBinding ps bod c i) = case c of
   BindLet -> reduceLet ps bod i
-  BindSchema _ -> evalError i "Unexpected schema binding"
 reduce t@TModule{} = evalError (_tInfo t) "Modules and Interfaces only allowed at top level"
 reduce t@TUse {} = evalError (_tInfo t) "Use only allowed at top level"
 
@@ -269,7 +268,7 @@ reduceDirect r _ ai = evalError ai $ "Unexpected non-native direct ref: " ++ sho
 
 -- | Create special error form handled in 'reduceApp'
 appError :: Info -> Text -> Term n
-appError i errMsg = TApp (toTerm errMsg) [] i
+appError i errMsg = TApp (tStr errMsg) [] i
 
 resolveFreeVars ::  HasEval env => Info -> Scope d Term Name ->  RIO env (Scope d Term Ref)
 resolveFreeVars i b = traverse r b where
@@ -288,7 +287,7 @@ enscope ::  HasEval env => Term Name ->  RIO env (Term Ref)
 enscope t = instantiate' <$> (resolveFreeVars (_tInfo t) . abstract (const Nothing) $ t)
 
 instantiate' :: Scope n Term a -> Term a
-instantiate' = instantiate1 (toTerm ("No bindings" :: Text))
+instantiate' = instantiate1 (tStr ("No bindings" :: Text))
 
 -- | Runtime input typecheck, enforced on let bindings, consts, user defun app args.
 -- Output checking -- app return values -- left to static TC.

@@ -34,21 +34,6 @@ import Universum ((<>))
 import Seal.Lang.Common.Compiler 
 import qualified Seal.Lang.Common.Compiler as C
 
-data CompileState = CompileState
-  { _csFresh :: Int
-  , _csModule :: Maybe ModuleName
-  -- extension point
-  , _csSpecialFormC :: Text -> C.ExpParse Exp CompileState (Term Name)
-  } 
-makeLenses ''CompileState
-
-instance Show CompileState where
-  show (CompileState n m _) = "CompileState " <> show n <> " " <> show m 
-
-type Compile a = C.ExpParse Exp CompileState a
-
-type Cursor = C.Cursor Exp
-
 -- | Run a compile. TODO squint harder at MP errors for better output.
 {-# INLINE runCompile #-}
 runCompile :: Compile a -> C.ParseState Exp CompileState -> [Exp Info] -> Either (Info, Text) a

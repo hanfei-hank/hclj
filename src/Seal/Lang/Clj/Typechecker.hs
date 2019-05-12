@@ -680,17 +680,10 @@ toAST TBinding {..} = do
       BindLet -> do
         assocAST aid v'
         return (Named n an aid,v')
-      BindSchema _ -> do
-        _fieldName <- asPrimString v'
-        return (Named n an aid,v')
   bb <- scopeToBody _tInfo (map (Var . _nnNamed . fst) bs) _tBindBody
   assocAST bi (Unsafe.last bb)
   bt <- case _tBindType of
     BindLet -> return AstBindLet
-    BindSchema sty -> do
-      sty' <- mangleType bi <$> traverse toUserType sty
-      sn <- trackNode sty' =<< freshId _tInfo (toText $ show bi ++ "schema")
-      return $ AstBindSchema sn
   return $ Binding bn bs bb bt
 
 toAST TList {..} = do

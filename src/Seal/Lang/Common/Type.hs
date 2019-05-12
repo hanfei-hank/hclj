@@ -7,7 +7,8 @@
 --
 
 module Seal.Lang.Common.Type
- ( ModuleName(..), TypeName(..),
+ ( ModuleName(..), Name(..), TypeName(..), DefVisibility(..),
+   CompileState(..), csFresh, csModule,
    Parsed(..),
    Code(..),
    Info(..),
@@ -29,9 +30,44 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<>),(<$>))
 import Seal.Lang.Common.Orphans ()
 import Seal.Lang.Common.Util
 
+data DefVisibility = PUBLIC | PRIVATE
+    deriving (Eq, Show, Generic)
+
 newtype ModuleName = ModuleName Text
     deriving (Eq,Ord,IsString,ToString,ToText,Hashable,Pretty)
     deriving Show via Text
+
+data CompileState = CompileState
+  { _csFresh :: Int
+  , _csModule :: Maybe ModuleName
+  } 
+makeLenses ''CompileState
+
+instance Show CompileState where
+  show (CompileState n m) = "CompileState " <> show n <> " " <> show m 
+
+-- | A named reference from source.
+data Name =
+    QName { _nQual :: ModuleName, _nName :: Text, _nInfo :: Info } |
+    Name { _nName :: Text, _nInfo :: Info }
+        deriving (Generic)
+instance Show Name where
+    show (QName q n _) = toString q ++ "/" ++ unpack n
+    show (Name n _) = unpack n
+
+instance Hashable Name where
+  hashWithSalt s (Name t _) = s `hashWithSalt` (0::Int) `hashWithSalt` t
+  hashWithSalt s (QName q n _) = s `hashWithSalt` (1::Int) `hashWithSalt` q `hashWithSalt` n
+instance Eq Name where
+  (QName a b _) == (QName c d _) = (a,b) == (c,d)
+  (Name a _) == (Name b _) = a == b
+  _ == _ = False
+instance Ord Name where
+  (QName a b _) `compare` (QName c d _) = (a,b) `compare` (c,d)
+  (Name a _) `compare` (Name b _) = a `compare` b
+  Name {} `compare` QName {} = LT
+  QName {} `compare` Name {} = GT
+  
 
 newtype TypeName = TypeName Text
   deriving (Eq,Ord,IsString,ToString,ToText,Pretty,Generic,NFData)
