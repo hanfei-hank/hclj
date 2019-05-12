@@ -33,10 +33,6 @@ termQ =
   defTypeRep :: DefType -> String
   defTypeRep Defun = "defn"
 
-  newtype NativeDefName = NativeDefName Text
-      deriving (Eq,Ord,IsString,ToString,ToText)
-      deriving Show via Text
-
   -- | Capture function application metadata
   data FunApp = FunApp {
         _faInfo :: !Info
@@ -305,7 +301,6 @@ termQ =
 
   |]
 
-  where
 
 makeTermLenses :: DecsQ
 makeTermLenses = 

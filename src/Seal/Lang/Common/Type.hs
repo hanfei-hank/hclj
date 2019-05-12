@@ -17,6 +17,7 @@ module Seal.Lang.Common.Type
    HasInfo(..),
    MkInfo, mkEmptyInfo, mkStringInfo, mkTextInfo,
    ConstVal(..),
+   NativeDefName(..),
    ) where
 
 
@@ -166,3 +167,8 @@ instance Eq1 ConstVal where
   liftEq eq (CVRaw a) (CVRaw b) = eq a b
   liftEq eq (CVEval a c) (CVEval b d) = eq a b && eq c d
   liftEq _ _ _ = False
+
+
+newtype NativeDefName = NativeDefName Text
+    deriving (Eq,Ord,IsString,ToString,ToText)
+    deriving Show via Text
