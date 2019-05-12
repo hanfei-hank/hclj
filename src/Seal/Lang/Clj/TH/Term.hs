@@ -29,23 +29,19 @@ termQ =
   [d|
 
 
-  data DefType = Defun deriving (Eq,Show)
-  defTypeRep :: DefType -> String
-  defTypeRep Defun = "defn"
-
   -- | Capture function application metadata
   data FunApp = FunApp {
         _faInfo :: !Info
       , _faName :: !Text
       , _faModule :: !(Maybe ModuleName)
-      , _faDefType :: !DefType
+      -- , _faDefType :: !DefType
       , _faTypes :: !(FunTypes (Term Name))
       , _faDocs :: !(Maybe Text)
       }
 
   instance Show FunApp where
     show FunApp {..} =
-      "(" ++ defTypeRep _faDefType ++ " " ++ maybeDelim "." _faModule ++
+      "(defn " ++ maybeDelim "." _faModule ++
       unpack _faName ++ " " ++ showFunTypes _faTypes ++ ")"
 
 
@@ -98,7 +94,7 @@ termQ =
       _tVisibility :: !DefVisibility
       , _tDefName :: !Text
       , _tModule :: !ModuleName
-      , _tDefType :: !DefType
+      -- , _tDefType :: !DefType
       , _tFunType :: !(FunType (Term n))
       , _tDefBody :: !(Scope Int Term n)
       , _tMeta :: !Meta
@@ -154,7 +150,7 @@ termQ =
         "(TModule " ++ show _tModuleDef ++ " " ++ show (unscope _tModuleBody) ++ ")"
       show (TList bs _ _) = "[" ++ unwords (map show bs) ++ "]"
       show TDef {..} =
-        "(TDef " ++ defTypeRep _tDefType ++ " " ++ toString _tModule ++ "." ++ unpack _tDefName ++ " " ++
+        "(TDef " ++ toString _tModule ++ "." ++ unpack _tDefName ++ " " ++
         show _tFunType ++ " " ++ show _tMeta ++ " " ++ show _tVisibility ++ ")"
       show TNative {..} =
         "(TNative " ++ toString _tNativeName ++ " " ++ showFunTypes _tFunTypes ++ " " ++ unpack _tNativeDocs ++ ")"
@@ -179,8 +175,8 @@ termQ =
       a == m && liftEq eq b n && c == o
     liftEq eq (TList a b c) (TList m n o) =
       liftEq (liftEq eq) a m && liftEq (liftEq eq) b n && c == o
-    liftEq eq (TDef h a b c d e f g) (TDef t m n o p q r s) =
-      h == t && a == m && b == n && c == o && liftEq (liftEq eq) d p && liftEq eq e q && f == r && g == s 
+    liftEq eq (TDef h a b d e f g) (TDef t m n p q r s) =
+      h == t && a == m && b == n && liftEq (liftEq eq) d p && liftEq eq e q && f == r && g == s 
     liftEq eq (TConst a b c d e) (TConst m n o q r) =
       liftEq (liftEq eq) a m && b == n && liftEq (liftEq eq) c o && d == q && e == r
     liftEq eq (TApp a b c) (TApp m n o) =
@@ -207,7 +203,7 @@ termQ =
       return a = TVar a def
       TModule m b i >>= f = TModule m (b >>>= f) i
       TList bs t i >>= f = TList (map (>>= f) bs) (fmap (>>= f) t) i
-      TDef p n m dt ft b d i >>= f = TDef p n m dt (fmap (>>= f) ft) (b >>>= f) d i
+      TDef p n m ft b d i >>= f = TDef p n m (fmap (>>= f) ft) (b >>>= f) d i
       TNative n fn t d tl i >>= f = TNative n fn (fmap (fmap (>>= f)) t) d tl i
       TConst d m c t i >>= f = TConst (fmap (>>= f) d) m (fmap (>>= f) c) t i
       TApp af as i >>= f = TApp (af >>= f) (map (>>= f) as) i
@@ -241,7 +237,7 @@ termQ =
         TLiteral l _ -> Right $ TyPrim $ litToPrim l
         TModule {} -> Left "contract"
         TList {..} -> Right $ TyList _tListType
-        TDef {..} -> Left $ pack $ defTypeRep _tDefType
+        TDef {..} -> Left "defn"
         TNative {..} -> Left "def"
         TConst {..} -> Left $ "const:" <> _aName _tConstArg
         TApp {..} -> Left "app"

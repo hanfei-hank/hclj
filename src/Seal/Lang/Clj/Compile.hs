@@ -250,7 +250,7 @@ defn visibility = do
   (defname,returnTy) <- first _atomAtom <$> typedAtom
   args <- withList' Brackets $ P.many arg --[]
   m <- meta ModelAllowed
-  TDef visibility defname modName Defun (FunType args returnTy)
+  TDef visibility defname modName (FunType args returnTy)
     <$> abstractBody args <*> pure m <*> contextInfo
 
 -- emptyDef :: Compile (Term Name)

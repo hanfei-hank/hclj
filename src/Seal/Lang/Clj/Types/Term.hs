@@ -13,10 +13,8 @@
 module Seal.Lang.Clj.Types.Term
  (
    Meta(..),mDocs,mModel,
-   DefType(..),
-   defTypeRep,
    NativeDefName(..),
-   FunApp(..),faDefType,faDocs,faInfo,faModule,faName,faTypes,
+   FunApp(..),faDocs,faInfo,faModule,faName,faTypes,
    Ref(..),
    NativeDFun(..),
    BindType(..),
@@ -27,7 +25,7 @@ module Seal.Lang.Clj.Types.Term
    Term(..),
    DefVisibility(..),
    tAppArgs,tAppFun,tBindBody,tBindPairs,tBindType,tConstArg,tConstVal,
-   tDefBody,tDefName,tDefType,tMeta,tFunTypes,tFunType,tInfo,
+   tDefBody,tDefName,tMeta,tFunTypes,tFunType,tInfo,
    tListType,tList,tLiteral,tModuleBody,tModuleDef,tModuleName,tModule,
    tNativeDocs,tNativeFun,tNativeName,tNativeTopLevelOnly,tObjectType,tObject,
    tVar,tVisibility,

@@ -93,7 +93,7 @@ filterOutPrivateDefs defs = HM.filterWithKey isNotPrivateDef
     isNotPrivateDef dn _ =
       case HM.lookup dn defs of
         Nothing -> False
-        Just (TDef PRIVATE _ _ _ _ _ _ _) -> False
+        Just (TDef PRIVATE _ _ _ _ _ _) -> False
         _ -> True
 
 -- | Definitions are transformed such that all free variables are resolved either to
@@ -140,9 +140,9 @@ solveConstraint info em refName (Ref t) _ =
       evalError info $ "found native reference " ++ show s ++ " while resolving contract contraints: " ++ show t
     Just (Ref s) ->
       case (t, s) of
-        (TDef _ _n _mn dt (FunType args rty) _ _ _,
-          TDef _ _n' _mn' dt' (FunType args' rty') _ _ _) -> do
-          when (dt /= dt') $ evalError info $ "deftypes mismatching: " ++ show dt ++ "\n" ++ show dt'
+        (TDef _ _n _mn (FunType args rty) _ _ _,
+          TDef _ _n' _mn' (FunType args' rty') _ _ _) -> do
+          -- when (dt /= dt') $ evalError info $ "deftypes mismatching: " ++ show dt ++ "\n" ++ show dt'
           when (rty /= rty') $ evalError info $ "return types mismatching: " ++ show rty ++ "\n" ++ show rty'
           when (length args /= length args') $ evalError info $ "mismatching argument lists: " ++ show args ++ "\n" ++ show args'
           forM_ (args `zip` args') $ \((Arg n ty _), (Arg n' ty' _)) -> do
@@ -229,17 +229,15 @@ reduceApp TDef {..} as ai = do
   ft' <- traverse reduce _tFunType
   typecheck (zip (_ftArgs ft') as')
   let bod' = instantiate (resolveArg ai (map mkDirect as')) _tDefBody
-      fa = FunApp _tInfo _tDefName (Just _tModule) _tDefType (funTypes ft') (_mDocs _tMeta)
-  appCall fa ai as $ do
-    case _tDefType of
-      Defun -> reduceBody bod'
+      fa = FunApp _tInfo _tDefName (Just _tModule) (funTypes ft') (_mDocs _tMeta)
+  appCall fa ai as $ reduceBody bod'
       -- Defpact -> applyPact bod'
 reduceApp (TLitString errMsg) _ i = evalError i $ toString errMsg
 reduceApp r _ ai = evalError ai $ "Expected def: " ++ show r
 
 reduceDirect :: HasEval env => Term Name -> [Term Ref] -> Info ->  RIO env (Term Name)
 reduceDirect TNative {..} as ai =
-  let fa = FunApp ai (toText _tNativeName) Nothing Defun _tFunTypes (Just _tNativeDocs)
+  let fa = FunApp ai (toText _tNativeName) Nothing _tFunTypes (Just _tNativeDocs)
       -- toplevel: only empty callstack or non-contract-having callstack allowed
       enforceTopLevel = traverse_ $ \c ->
         case preview (sfApp . _Just . _1 . faModule . _Just) c of
