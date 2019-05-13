@@ -6,7 +6,6 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 -- |
--- Module      :  Seal.Lang.Clj.Compile
 --
 -- Parser to 'Exp's.
 --

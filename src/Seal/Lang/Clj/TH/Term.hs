@@ -28,7 +28,6 @@ import Seal.Lang.Clj.Types.Exp
 termQ = 
   [d|
 
-
   -- | Capture function application metadata
   data FunApp = FunApp {
         _faInfo :: !Info

@@ -13,7 +13,7 @@ import Seal.Lang.Clj.Types.Exp
 import Seal.Lang.Clj.Types.Runtime (argsError)
 import Seal.Lang.Clj.Types.Term
 import Seal.Lang.Clj.Parse
-import Seal.Lang.Clj.Compile (parseCompile)
+import Seal.Lang.Clj.Eval (parseCompile)
 import Seal.Lang.Clj.Native.Internal
 
 exps :: QuasiQuoter

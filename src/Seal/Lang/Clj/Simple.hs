@@ -8,7 +8,6 @@ import qualified Seal.Prelude.Unsafe as Unsafe
 import Seal.TH (merge, (.<))
 import qualified Seal.TH as TH
 import Seal.Lang.Clj.Types.Runtime
-import Seal.Lang.Clj.Compile
 import Seal.Lang.Clj.Eval
 import Seal.Lang.Clj.Parse
 import Seal.Lang.Clj.Native
