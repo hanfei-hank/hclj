@@ -78,7 +78,7 @@ makeNativeDef = mapM $ \f -> do
 nativePat :: PatQ -> Type -> PatQ
 nativePat v (ConT n)
   | n == ''Text = [p| TLiteral (LString $v) _ |]
-  | n == ''Int    = [p| TLiteral (LInteger $v) _ |]
+  | n == ''Integer    = [p| TLiteral (LInteger $v) _ |]
 nativePat _ t = fail "unsupport native param type"
 
 nativeCall :: TH.Name -> TypeQ -> DecQ
@@ -99,7 +99,8 @@ argsErrCall = do
 nativeType :: Type -> ExpQ
 nativeType (ConT n)
   | n == ''Text = [|tTyString|]
-  | n == ''Int    = [| tTyInteger|]
+  | n == ''Integer    = [| tTyInteger|]
+  | otherwise = fail $ "unsupported native type :" <> show n
 
 nativeReturnType :: Type -> ExpQ
 nativeReturnType t = nativeType $ Unsafe.last $ unappConT' t 
