@@ -5,7 +5,6 @@
 {-# LANGUAGE TypeApplications #-}
 
 -- |
--- Module      :  Seal.Lang.Clj.Types.Term
 --
 -- Term and related types.
 --

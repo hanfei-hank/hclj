@@ -167,7 +167,7 @@ expToTerm AtomExp{..} = TVar (Name _atomAtom _atomInfo) _atomInfo
 app :: Compile (Term Name)
 app = do
   v <- varAtom
-  body <- P.many (term)
+  body <- P.many term
   TApp v body <$> contextInfo
 
 varAtom :: Compile (Term Name)

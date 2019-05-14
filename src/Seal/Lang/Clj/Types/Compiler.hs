@@ -7,7 +7,6 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 -- |
--- Module      :  Seal.Lang.Clj.Types.Compiler
 --
 -- Parser combinator over 'Exp'.
 --
@@ -28,7 +27,6 @@ import Data.Text (Text,pack,unpack)
 import qualified Data.Set as S
 
 import Seal.Lang.Clj.Types.Exp
-import Seal.Lang.Clj.Types.Term
 import Seal.Lang.Common.Type
 import Universum ((<>))
 import Seal.Lang.Common.Compiler 

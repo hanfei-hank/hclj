@@ -33,7 +33,6 @@ termQ =
         _faInfo :: !Info
       , _faName :: !Text
       , _faModule :: !(Maybe ModuleName)
-      -- , _faDefType :: !DefType
       , _faTypes :: !(FunTypes (Term Name))
       , _faDocs :: !(Maybe Text)
       }

@@ -1,4 +1,5 @@
 {-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 -- |
 -- Module      :  Seal.Lang.Common.Type
