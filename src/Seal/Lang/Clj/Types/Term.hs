@@ -28,7 +28,7 @@ module Seal.Lang.Clj.Types.Term
    tListType,tList,tLiteral,tModuleBody,tModuleDef,tModuleName,tModule,
    tNativeDocs,tNativeFun,tNativeName,tNativeTopLevelOnly,tObjectType,tObject,
    tVar,tVisibility,
-   ToTerm(..),
+   ToTerm(..),toTermLiteral,
    toTermList,toTObject,toTList,
    typeof,typeof',
    pattern TLitString,pattern TLitInteger,pattern TLitBool, pattern TLitKeyword,
@@ -57,6 +57,8 @@ import Seal.Lang.Clj.TH.Term
 termQ
 makeTermLenses
 
+toTermLiteral :: ToLiteral a => a -> Term n
+toTermLiteral = toTerm . toLiteral
 
 pattern TLitString :: Text -> Term t
 pattern TLitString s <- TLiteral (LString s) _

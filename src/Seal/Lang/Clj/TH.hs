@@ -86,7 +86,7 @@ nativeCall f t = do
   pts <- uncurryType t
   (ps, es) <- genPE "a" $ length pts - 1
   let nCall = rename' f (++ "'")
-      c = clause [wildP , listP (zipWith nativePat ps $ Unsafe.init pts)] (normalB [| toTerm <$> $(appExp $ varE f : es) |]) []
+      c = clause [wildP , listP (zipWith nativePat ps $ Unsafe.init pts)] (normalB [| toTermLiteral <$> $(appExp $ varE f : es) |]) []
       caller = funD nCall [c, argsErrCall]
       d = [|defRNative $(nameToExp id f) $(varE nCall) $(nativeFunType pts) "desc"|]
   funD (rename' f (++ "Def")) [clause [] (normalB d) [caller]]
