@@ -44,13 +44,14 @@ instance TokenParsing p => TokenParsing (LangParser p) where
 
 style :: CharParsing m => IdentifierStyle m
 style = IdentifierStyle "atom"
-        (letter <|> symbols)
+        firstC
         (letter <|> digit <|> symbols)
-        (HS.fromList ["true","false"])
+        (HS.fromList ["true","false","/"])
         Symbol
         ReservedIdentifier
   where
-    symbols = oneOf "%#+-_&$@<>=?*!|./"
+    firstC = letter <|> oneOf "*+!-_?<>="
+    symbols = oneOf "+-_<>=?*!./"
 
 isSpaceOrComma :: Char -> Bool
 isSpaceOrComma ',' = True
@@ -73,6 +74,7 @@ expr = withParsed \inf -> do
     , EList <$> (ListExp <$> parens (many expr) <*> pure Parens <*> inf) <?> "(list)"
     , EList <$> (ListExp <$> braces (many expr) <*> pure Braces <*> inf) <?> "[list]"
     , EList <$> (ListExp <$> brackets (many expr) <*> pure Brackets <*> inf) <?> "{list}"
+    , reserveText style "/" >> (EAtom . AtomExp "/" [] <$> inf) <?> "/"
     , separator ":" Colon
     , separator "^" SCaret 
     ]
