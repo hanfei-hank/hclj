@@ -65,11 +65,11 @@ notHandled things _ = fail $
 -- 简化native函数的声明
 makeNativeModule :: String -> [TH.Name] -> DecsQ
 makeNativeModule name ns = do
-  let toDefE n = varE $ rename' n (++ "Def")
-  let body = [| ($(stringE name), $(listE $ map toDefE ns)) |]
-      mn = mkName $ name ++ "Module"
   defs <- makeNativeDef ns
-  sequence [funD mn [clause [] (normalB body) (map return defs)]]
+  let toDefE n = varE $ rename' n (++ "Def")
+  let body = letE (map return defs) [| ($(stringE name), $(listE $ map toDefE ns)) |]
+      mn = mkName $ name ++ "Module"
+  sequence [funD mn [clause [] (normalB body) []]]
 
 makeNativeDef :: [TH.Name] -> DecsQ
 makeNativeDef = mapM $ \f -> do
@@ -89,8 +89,8 @@ nativeCall f t = do
   let nCall = rename' f (++ "'")
       c = clause [wildP , listP (zipWith nativePat ps $ Unsafe.init pts)] (normalB [| toTermLiteral <$> $(appExp $ varE f : es) |]) []
       caller = funD nCall [c, argsErrCall]
-      d = [|defRNative $(nameToExp kebab f) $(varE nCall) $(nativeFunType pts) "desc"|]
-  funD (rename' f (++ "Def")) [clause [] (normalB d) [caller]]
+      d = letE [caller] [|defRNative $(nameToExp kebab f) $(varE nCall) $(nativeFunType pts) "desc"|]
+  funD (rename' f (++ "Def")) [clause [] (normalB d) []]
 
 argsErrCall :: ClauseQ
 argsErrCall = do
