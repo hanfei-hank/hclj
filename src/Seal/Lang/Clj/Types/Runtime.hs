@@ -95,8 +95,8 @@ updateRefStore RefState {..}
 
 class HasEval env where
   getRefStore :: RIO env RefStore
-  default getRefStore :: HasType RefStore env => RIO env RefStore
-  getRefStore = view typed
+  default getRefStore :: HasType (IORef RefStore) env => RIO env RefStore
+  getRefStore = view typed >>= readIORef
 
   getRefState :: RIO env RefState
   default getRefState :: HasType (IORef RefState) env => RIO env RefState
