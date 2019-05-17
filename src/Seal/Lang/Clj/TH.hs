@@ -8,6 +8,7 @@ module Seal.Lang.Clj.TH (
 import Universum hiding (Type)
 import qualified Universum.Unsafe as Unsafe
 import Seal.TH as TH
+import Text.Casing
 
 import Seal.Lang.Clj.Types.Exp
 import Seal.Lang.Clj.Types.Runtime (argsError)
@@ -88,7 +89,7 @@ nativeCall f t = do
   let nCall = rename' f (++ "'")
       c = clause [wildP , listP (zipWith nativePat ps $ Unsafe.init pts)] (normalB [| toTermLiteral <$> $(appExp $ varE f : es) |]) []
       caller = funD nCall [c, argsErrCall]
-      d = [|defRNative $(nameToExp id f) $(varE nCall) $(nativeFunType pts) "desc"|]
+      d = [|defRNative $(nameToExp kebab f) $(varE nCall) $(nativeFunType pts) "desc"|]
   funD (rename' f (++ "Def")) [clause [] (normalB d) [caller]]
 
 argsErrCall :: ClauseQ
