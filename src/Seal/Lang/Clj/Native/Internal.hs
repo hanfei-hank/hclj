@@ -93,10 +93,3 @@ getModule i n = do
       case rm of
         Just ModuleData{..} -> return _mdModule
         Nothing -> evalError i $ "Unable to resolve contract " ++ show n
-
-tTyInteger :: Type n; tTyInteger = TyPrim TyInteger
-tTyDecimal :: Type n; tTyDecimal = TyPrim TyDecimal
-tTyTime :: Type n; tTyTime = TyPrim TyTime
-tTyBool :: Type n; tTyBool = TyPrim TyBool
-tTyString :: Type n; tTyString = TyPrim TyString
-tTyObject :: Type n -> Type n; tTyObject = TySchema TyObject

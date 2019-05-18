@@ -476,6 +476,7 @@ evalConsts r = return r
 
 
 deref :: HasEval env => Ref -> RIO env (Term Name)
+deref (Direct (TNativeVar n _ _)) = reduceNativeVar $ toText n
 deref (Direct n) = return n
 deref (Ref r) = reduce r
 

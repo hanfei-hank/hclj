@@ -18,12 +18,16 @@ data SimpleCljEnv = SimpleCljEnv {
     eRefStore :: IORef RefStore
   , eRefState :: IORef RefState
   , eCallStack :: IORef [StackFrame]
+  , eNativeVarReducer :: IORef (Text -> RIO SimpleCljEnv (Term Name))
 } deriving (Generic)
 
-instance HasEval SimpleCljEnv
+instance HasEval SimpleCljEnv where
+  reduceNativeVar n = do
+    f <- asks eNativeVarReducer >>= readIORef
+    f n
 
 newSimpleCljEnv :: MonadIO m => m SimpleCljEnv
-newSimpleCljEnv = SimpleCljEnv <$> newIORef refStore <*> newIORef def <*> newIORef def 
+newSimpleCljEnv = SimpleCljEnv <$> newIORef refStore <*> newIORef def <*> newIORef def <*> newIORef undefined
   where
     refStore :: RefStore
     refStore = RefStore (foldMap moduleToMap preloadModules) mempty
@@ -37,12 +41,21 @@ loadNativeModule m = do
     ref <- asks eRefStore 
     modifyIORef ref (<> RefStore (moduleToMap m) mempty)
 
+defNativeVar :: Text -> Type (Term Name) -> Repl ()
+defNativeVar n t = do
+    ref <- asks eRefStore
+    modifyIORef ref $ installNative n $ Direct $ TNativeVar (NativeDefName n) t def 
 
-  -- makeNativeModule "user" ns <>
-
+installNativeVarReducer :: (Text -> Repl (Term Name)) -> Repl ()
+installNativeVarReducer r = do
+    ref <- asks eNativeVarReducer
+    writeIORef ref r
 
 eval :: Term Name -> Repl (Term Name)
-eval t = enscope t >>= reduce
+eval t = do
+  tref <- enscope t
+  putStrLn $ show tref
+  reduce tref
 
 evalString :: String -> Repl ()
 evalString src = do
@@ -64,9 +77,9 @@ evalTerms ts =
     )
     $ \(e :: SomeException) -> print e
 
-new :: NativeModule SimpleCljEnv -> IO (String -> IO ())
-new userModule = do
+new :: Repl () -> IO (String -> IO ())
+new init = do
     env <- newSimpleCljEnv 
-    runRIO env $ loadNativeModule userModule
+    runRIO env init
     return $ \src -> runRIO env (evalString src)
 

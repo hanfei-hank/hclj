@@ -106,6 +106,11 @@ termQ =
       , _tNativeTopLevelOnly :: Bool
       , _tInfo :: !Info
       } |
+      TNativeVar {
+        _tNativeVarName :: !NativeDefName
+      , _tNativeVarType :: Type (Term n)
+      , _tInfo          :: !Info
+      } |
       TConst {
         _tConstArg :: !(Arg (Term n))
       , _tModule :: !ModuleName
@@ -152,6 +157,8 @@ termQ =
         show _tFunType ++ " " ++ show _tMeta ++ " " ++ show _tVisibility ++ ")"
       show TNative {..} =
         "(TNative " ++ toString _tNativeName ++ " " ++ showFunTypes _tFunTypes ++ " " ++ unpack _tNativeDocs ++ ")"
+      show TNativeVar {..} =
+        toString _tNativeVarName
       show TConst {..} =
         "(TConst " ++ toString _tModule ++ "." ++ show _tConstArg ++ " " ++ show _tMeta ++ ")"
       show (TApp f as _) = "(TApp " ++ show f ++ " " ++ show as ++ ")"
@@ -203,6 +210,7 @@ termQ =
       TList bs t i >>= f = TList (map (>>= f) bs) (fmap (>>= f) t) i
       TDef p n m ft b d i >>= f = TDef p n m (fmap (>>= f) ft) (b >>>= f) d i
       TNative n fn t d tl i >>= f = TNative n fn (fmap (fmap (>>= f)) t) d tl i
+      TNativeVar n t i >>= f = TNativeVar n (fmap (>>= f) t) i
       TConst d m c t i >>= f = TConst (fmap (>>= f) d) m (fmap (>>= f) c) t i
       TApp af as i >>= f = TApp (af >>= f) (map (>>= f) as) i
       TVar n i >>= f = (f n) { _tInfo = i }
@@ -237,6 +245,7 @@ termQ =
         TList {..} -> Right $ TyList _tListType
         TDef {..} -> Left "defn"
         TNative {..} -> Left "def"
+        TNativeVar {..} -> Right _tNativeVarType
         TConst {..} -> Left $ "const:" <> _aName _tConstArg
         TApp {..} -> Left "app"
         TVar {..} -> Left "var"
@@ -285,6 +294,7 @@ termQ =
   abbrev (TList bs tl _) = "<list(" ++ show (length bs) ++ ")" ++ showParamType tl ++ ">"
   abbrev TDef {..} = "<defn " ++ unpack _tDefName ++ ">"
   abbrev TNative {..} = "<native " ++ toString _tNativeName ++ ">"
+  abbrev TNativeVar {..} = toString _tNativeVarName
   abbrev TConst {..} = "<def " ++ show _tConstArg ++ ">"
   abbrev t@TApp {} = "<app " ++ abbrev (_tAppFun t) ++ ">"
   abbrev TBinding {} = "<binding>"

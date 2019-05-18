@@ -17,7 +17,7 @@ module Seal.Lang.Clj.Types.Runtime
    evalError,evalError',argsError,argsError', 
    etArgsError, etEvalError, etSyntaxError,
    ModuleData(..), mdModule, mdRefMap,
-   RefStore(..),rsNatives,rsModules,
+   RefStore(..),rsNatives,rsModules,installNative,
    updateRefStore,
    StackFrame(..),sfName,sfLoc,sfApp,
    RefState(..),rsLoaded,rsLoadedModules,rsNewModules,
@@ -75,6 +75,9 @@ instance Semigroup RefStore where
 instance Monoid RefStore where
   mempty = RefStore mempty mempty
 
+installNative :: Text -> Ref -> RefStore -> RefStore
+installNative n r = over rsNatives $ HM.insert (Name n def) r
+
 -- | Dynamic storage for namespace-loaded modules, and new modules compiled in current tx.
 data RefState = RefState {
       -- | Namespace-local defs.
@@ -117,6 +120,9 @@ class HasEval env where
   -- report error, with category
   throwEvalErr :: KnownSymbol n => Proxy n -> Info -> Text -> RIO env a
   throwEvalErr _ _ m = throwString $ toString m
+
+  reduceNativeVar :: Text -> RIO env (Term Name)
+
 
 etEvalError :: Proxy "EvalError"; etEvalError = Proxy
 etArgsError :: Proxy "ArgsError"; etArgsError = Proxy
