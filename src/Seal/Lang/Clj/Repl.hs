@@ -1,7 +1,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 -- {-# LANGUAGE TemplateHaskell #-}
 
-module Seal.Lang.Clj.Simple where
+module Seal.Lang.Clj.Repl where
 
 import Seal.Prelude
 import qualified Seal.Prelude.Unsafe as Unsafe
@@ -14,29 +14,29 @@ import Seal.Lang.Clj.Native
 import Seal.Lang.Clj.Native.Internal
 import Seal.Lang.Clj.TH
 
-data SimpleCljEnv = SimpleCljEnv {
+data ReplEnv = ReplEnv {
     eRefStore :: IORef RefStore
   , eRefState :: IORef RefState
   , eCallStack :: IORef [StackFrame]
-  , eNativeVarReducer :: IORef (Text -> RIO SimpleCljEnv (Term Name))
+  , eNativeVarReducer :: IORef (Text -> RIO ReplEnv (Term Name))
 } deriving (Generic)
 
-instance HasEval SimpleCljEnv where
+instance HasEval ReplEnv where
   reduceNativeVar n = do
     f <- asks eNativeVarReducer >>= readIORef
     f n
 
-newSimpleCljEnv :: MonadIO m => m SimpleCljEnv
-newSimpleCljEnv = SimpleCljEnv <$> newIORef refStore <*> newIORef def <*> newIORef def <*> newIORef undefined
+newReplEnv :: MonadIO m => m ReplEnv
+newReplEnv = ReplEnv <$> newIORef refStore <*> newIORef def <*> newIORef def <*> newIORef undefined
   where
     refStore :: RefStore
     refStore = RefStore (foldMap moduleToMap preloadModules) mempty
-    preloadModules :: [NativeModule SimpleCljEnv]
+    preloadModules :: [NativeModule ReplEnv]
     preloadModules = natives
 
-type Repl a = RIO SimpleCljEnv a
+type Repl a = RIO ReplEnv a
 
-loadNativeModule :: NativeModule SimpleCljEnv -> Repl ()
+loadNativeModule :: NativeModule ReplEnv -> Repl ()
 loadNativeModule m = do
     ref <- asks eRefStore 
     modifyIORef ref (<> RefStore (moduleToMap m) mempty)
@@ -79,7 +79,7 @@ evalTerms ts =
 
 new :: Repl () -> IO (String -> IO ())
 new init = do
-    env <- newSimpleCljEnv 
+    env <- newReplEnv 
     runRIO env init
     return $ \src -> runRIO env (evalString src)
 
