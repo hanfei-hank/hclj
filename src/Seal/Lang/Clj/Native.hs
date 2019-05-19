@@ -106,11 +106,19 @@ ifDef = defNative "if" if' (funType a [("cond",tTyBool),("then",a),("else",a)])
                t -> evalError' i $ "if: conditional not boolean: " ++ show t
     if' i as = argsError' i as
 
+-- do 
+do' i = go
+  where
+    go [exp] = reduce exp
+    go (exp:as) = reduce exp >> go as
+
+doDef :: HasEval env => NativeDef env
+doDef = defNative "do" do' (funType a []) "do"
 
 langDefs :: HasEval env => NativeModule env
 langDefs =
     ("General",[
-     ifDef
+     ifDef,doDef
     ,defNative "map" map'
      (funType (TyList a) [("app",lam b a),("list",TyList b)])
      "Apply APP to each element in LIST, returning a new list of results. \
