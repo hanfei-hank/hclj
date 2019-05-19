@@ -115,10 +115,30 @@ do' i = go
 doDef :: HasEval env => NativeDef env
 doDef = defNative "do" do' (funType a []) "do"
 
+whenDef :: HasEval env => NativeDef env
+whenDef = defNative "when" when' (funType a []) "when"
+  where
+    when' i (cond:as) = reduce cond >>= \case
+        TLiteral (LBool c) _ 
+          | c == True -> do' i as
+          | otherwise -> return $ toTermLiteral False
+        t -> evalError' i $ "when: conditinal not boolean: " ++ show t
+    when' i as = argsError' i as
+
+whileDef :: HasEval env => NativeDef env
+whileDef = defNative "while" while' (funType a []) "while"
+  where
+    while' i (cond:as) = reduce cond >>= \case
+        TLiteral (LBool c) _ 
+          | c == True -> do' i as >> while' i (cond:as)
+          | otherwise -> return $ toTermLiteral False
+        t -> evalError' i $ "while: conditinal not boolean: " ++ show t
+    while' i as = argsError' i as
+
 langDefs :: HasEval env => NativeModule env
 langDefs =
     ("General",[
-     ifDef,doDef
+     ifDef,doDef,whenDef,whileDef
     ,defNative "map" map'
      (funType (TyList a) [("app",lam b a),("list",TyList b)])
      "Apply APP to each element in LIST, returning a new list of results. \
