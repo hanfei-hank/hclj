@@ -1,4 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 -- {-# LANGUAGE TemplateHaskell #-}
 
 module Seal.Lang.Clj.Repl where
@@ -52,6 +53,10 @@ installNativeVarReducer r = do
     writeIORef ref r
 
 eval :: Term Name -> Repl (Term Name)
+eval (TModule m@Module{..} bod i) = do
+  _defs <- loadModule m bod i
+  return $ toTermLiteral @Text "load ok"
+  
 eval t = do
   tref <- enscope t
   putStrLn $ show tref
@@ -68,6 +73,12 @@ evalString src = do
     Left err -> putStrLn err
     Right ts -> evalTerms ts
 
+evalFile :: FilePath -> Repl ()
+evalFile path = do
+  code <- toString <$> readFileUtf8 path
+  evalString code
+  -- call run method
+  evalString "(run)"
 
 evalTerms :: [Term Name] -> Repl ()
 evalTerms ts =

@@ -71,15 +71,8 @@ cljVersionDef = setTopLevelOnly $ defRNative "seal-version"
   "Obtain current seal build version. `(seal-version)`"
 
 
-formatDef :: HasEval env => NativeDef env
-formatDef =
-  defRNative "format" format
-  (funType tTyString [("template",tTyString),("vars",TyList TyAny)])
-  "Interpolate VARS into TEMPLATE using {}. \
-  \`(format \"My {} has {}\" [\"dog\" \"fleas\"])`"
-  where
-
-    format i [TLitString s,TList es _ _] = do
+format' :: HasEval env => FunApp -> Text -> [Term Name] -> RIO env (Term Name)
+format' i s es = do
       let parts = T.splitOn "{}" s
           plen = length parts
           rep (TLitString t) = t
@@ -93,7 +86,35 @@ formatDef =
                   (\r (e,t) -> r <> rep e <> t)
                   (Unsafe.head parts)
                   (zip es (Unsafe.tail parts))
+
+
+formatDef :: HasEval env => NativeDef env
+formatDef =
+  defRNative "format" format
+  (funType tTyString [("template",tTyString),("vars",TyList TyAny)])
+  "Interpolate VARS into TEMPLATE using {}. \
+  \`(format \"My {} has {}\" [\"dog\" \"fleas\"])`"
+  where
+
+    format i (TLitString s : es) = format' i s es
     format i as = argsError i as
+
+printfDef :: HasEval env => NativeDef env
+printfDef =
+  defRNative "printf" printf
+  (funType tTyString [("template",tTyString),("vars",TyList TyAny)])
+  "Interpolate VARS into TEMPLATE using {}. \
+  \`(printf \"My {} has {}\" [\"dog\" \"fleas\"])`"
+  where
+
+    -- printf i [TLitString s] = putTextLn s >> return (tStr "")
+    printf i (TLitString s : es) = do
+        msg <- format' i s es 
+        putStrLn $ show msg
+        return msg
+    printf i as = argsError i as
+
+
 
 ifDef :: HasEval env => NativeDef env
 ifDef = defNative "if" if' (funType a [("cond",tTyBool),("then",a),("else",a)])
@@ -207,7 +228,7 @@ langDefs =
      \`(get [1 2 3] 1)` `(get { :foo 1, :bar 2 } :bar)`"
 
 
-    ,formatDef
+    ,formatDef, printfDef
 
     -- ,defRNative "tx-hash" txHash (funType tTyString [])
     --  "Obtain hash of current transaction as a string. `(tx-hash)`"
