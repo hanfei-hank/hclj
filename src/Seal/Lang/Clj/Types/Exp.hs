@@ -58,6 +58,7 @@ instance ToLiteral Bool where toLiteral = LBool
 instance ToLiteral Integer where toLiteral = LInteger
 instance ToLiteral Int where toLiteral = LInteger . fromIntegral
 instance ToLiteral Decimal where toLiteral = LDecimal
+instance ToLiteral Double where toLiteral = LDecimal . fromRational . toRational
 instance ToLiteral Text where toLiteral = LString
 instance ToLiteral String where toLiteral s = case s of 
                                           (':':xs) ->  LKeyword $ pack xs 

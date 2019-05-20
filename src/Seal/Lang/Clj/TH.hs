@@ -2,7 +2,8 @@
 
 module Seal.Lang.Clj.TH (
   exps, terms, expsF, termsF, 
-  makeNativeDef, makeNativeModule, nativePat, nativeCall,
+  makeNativeModule, nativePat, nativeCall,
+  defRNativeQ,
   ) where
 
 import Universum hiding (Type)
@@ -65,16 +66,9 @@ notHandled things _ = fail $
 -- 简化native函数的声明
 makeNativeModule :: String -> [TH.Name] -> DecsQ
 makeNativeModule name ns = do
-  defs <- makeNativeDef ns
-  let toDefE n = varE $ rename' n (++ "Def")
-  let body = letE (map return defs) [| ($(stringE name), $(listE $ map toDefE ns)) |]
+  let body = [| ($(stringE name), $(listE $ map nativeCall ns)) |]
       mn = mkName $ name ++ "Module"
   sequence [funD mn [clause [] (normalB body) []]]
-
-makeNativeDef :: [TH.Name] -> DecsQ
-makeNativeDef = mapM $ \f -> do
-  VarI _ t _ <- reify f
-  nativeCall f (pure t)
 
 nativePat :: PatQ -> Type -> PatQ
 nativePat v (ConT n)
@@ -82,15 +76,20 @@ nativePat v (ConT n)
   | n == ''Integer    = [p| TLiteral (LInteger $v) _ |]
 nativePat _ t = fail "unsupport native param type"
 
-nativeCall :: TH.Name -> TypeQ -> DecQ
-nativeCall f t = do
-  pts <- uncurryType t
+nativeCall :: TH.Name -> ExpQ
+nativeCall f = do
+  VarI _ t _ <- reify f
+  defRNativeQ (kebab $ nameBase f) (pure t) (varE f)
+
+defRNativeQ :: String -> TypeQ -> ExpQ -> ExpQ
+defRNativeQ n tq exp = do
+  pts <- uncurryType tq
   (ps, es) <- genPE "a" $ length pts - 1
-  let nCall = rename' f (++ "'")
-      c = clause [wildP , listP (zipWith nativePat ps $ Unsafe.init pts)] (normalB [| toTermLiteral <$> $(appExp $ varE f : es) |]) []
+  let nCall = mkName "_native"
+      c = clause [wildP , listP (zipWith nativePat ps $ Unsafe.init pts)] (normalB [| toTermLiteral <$> $(appExp $ exp : es) |]) []
       caller = funD nCall [c, argsErrCall]
-      d = letE [caller] [|defRNative $(nameToExp kebab f) $(varE nCall) $(nativeFunType pts) "desc"|]
-  funD (rename' f (++ "Def")) [clause [] (normalB d) []]
+  letE [caller] [|defRNative $(TH.lift n) $(varE nCall) $(nativeFunType pts) "desc"|]
+
 
 argsErrCall :: ClauseQ
 argsErrCall = do
