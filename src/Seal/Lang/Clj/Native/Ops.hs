@@ -417,15 +417,25 @@ defCmp o f =
 
 -- | Monomorphic compare.
 cmp :: HasEval env => (Ordering -> Bool) -> RNativeFun env
-cmp cmpFun fi as@[TLiteral a _, TLiteral b _] = do
-  c <-
-    case (a, b) of
-      (LInteger i, LInteger j) -> return $ i `compare` j
-      (LDecimal i, LDecimal j) -> return $ i `compare` j
-      (LString i, LString j) -> return $ i `compare` j
-      (LTime i, LTime j) -> return $ i `compare` j
-      _ -> argsError fi as
-  return $ toTerm $ toLiteral (cmpFun c)
+cmp cmpFun fi terms@(TLiteral a _ : as@(_ : _)) = do
+  c <- go a as
+  return $ toTerm $ toLiteral c
+
+  where
+    go a [] = return True
+    go a (TLiteral b _ : as) = do
+      c <- case (a, b) of
+        (LInteger i, LInteger j) -> return $ i `compare` j
+        (LDecimal i, LDecimal j) -> return $ i `compare` j
+        (LString i, LString j) -> return $ i `compare` j
+        (LTime i, LTime j) -> return $ i `compare` j
+        _ -> argsError fi terms
+
+      if cmpFun c 
+        then go b as
+        else return False
+      
+
 cmp _ fi as = argsError fi as
 
 {-# INLINE cmp #-}
