@@ -64,12 +64,14 @@ someSpaceOrComma = skipSome (satisfy isSpaceOrComma)
 expr :: (Monad m, TokenParsing m, DeltaParsing m) => LangParser m (Exp Parsed)
 expr = withParsed \inf -> do
   let separator t s = symbol t >> (ESeparator . SeparatorExp s <$> inf)
+      deref s i = EList $ ListExp [EAtom $ AtomExp "deref" [] i, EAtom $ AtomExp s [] i] Parens i
   msum
     [ TF.try (ELiteral <$> (LiteralExp <$> token numberLiteral <*> inf)) <?> "number"
     , ELiteral <$> (LiteralExp . LString <$> stringLiteral <*> inf) <?> "string"
     , ELiteral <$> (LiteralExp . LString <$> (symbolic '\'' >> ident style) <*> inf) <?> "symbol"
     , ELiteral <$> (LiteralExp . LKeyword <$> (char ':' >> ident style) <*> inf) <?> "keyword"
     , ELiteral <$> (LiteralExp <$> boolLiteral <*> inf) <?> "bool"
+    , deref <$> (char '@' >> ident style) <*> inf <?> "deref"
     ,(qualifiedAtom3 >>= \(a,qs) ->EAtom . AtomExp a qs <$> inf) <?> "atom"
     , EList <$> (ListExp <$> parens (many expr) <*> pure Parens <*> inf) <?> "(list)"
     , EList <$> (ListExp <$> braces (many expr) <*> pure Braces <*> inf) <?> "[list]"
