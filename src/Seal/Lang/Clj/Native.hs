@@ -156,10 +156,36 @@ whileDef = defNative "while" while' (funType a []) "while"
         t -> evalError' i $ "while: conditinal not boolean: " ++ show t
     while' i as = argsError' i as
 
+-- atom support TODO: seperate file
+atomDef :: HasEval env => NativeDef env
+atomDef = defRNative "atom" atom' (funType a []) "atom"
+  where
+    atom' i [v] = do
+        putStrLn $ "new atom" <> show v
+        ref <- newIORef v
+        return $ TAtom ref def
+    atom' i as = argsError i as
+
+derefDef :: HasEval env => NativeDef env
+derefDef = defRNative "deref" deref' (funType a []) "deref"
+  where
+    deref' i [TAtom ref _] = readIORef ref
+    deref' i as = argsError i as
+
+resetAtomDef :: HasEval env => NativeDef env
+resetAtomDef = defRNative "reset!" reset' (funType a []) "reset"
+  where
+    reset' i [TAtom ref _, v] = do
+        putStrLn $ "reset " <> show v
+        writeIORef ref v
+        return v
+    reset' i as = argsError i as
+
 langDefs :: HasEval env => NativeModule env
 langDefs =
     ("General",[
      ifDef,doDef,whenDef,whileDef
+    ,atomDef, derefDef, resetAtomDef
     ,defNative "map" map'
      (funType (TyList a) [("app",lam b a),("list",TyList b)])
      "Apply APP to each element in LIST, returning a new list of results. \

@@ -493,6 +493,7 @@ reduce t@TLiteral {} = unsafeReduce t
 reduce TList {..} = TList <$> mapM reduce _tList <*> traverse reduce _tListType <*> pure _tInfo
 reduce t@TDef {} = return $ tStr $ toText $ show t
 reduce t@TNative {} = return $ tStr $ toText $ show t
+reduce (TAtom ref i) = return $ TAtom ref i
 reduce TConst {..} = case _tConstVal of
   CVEval _ t -> reduce t
   CVRaw a -> evalError _tInfo $ "internal error: reduce: unevaluated const: " ++ show a

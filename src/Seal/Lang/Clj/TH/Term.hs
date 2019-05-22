@@ -118,6 +118,10 @@ termQ =
       , _tMeta :: !Meta
       , _tInfo :: !Info
       } |
+      TAtom {
+        _tAtomRef   :: IORef (Term Name)
+      , _tInfo      :: !Info
+      } |
       TApp {
         _tAppFun :: !(Term n)
       , _tAppArgs :: ![Term n]
@@ -159,6 +163,7 @@ termQ =
         "(TNative " ++ toString _tNativeName ++ " " ++ showFunTypes _tFunTypes ++ " " ++ unpack _tNativeDocs ++ ")"
       show TNativeVar {..} =
         toString _tNativeVarName
+      show TAtom {..} = "<atom>"
       show TConst {..} =
         "(TConst " ++ toString _tModule ++ "." ++ show _tConstArg ++ " " ++ show _tMeta ++ ")"
       show (TApp f as _) = "(TApp " ++ show f ++ " " ++ show as ++ ")"
@@ -182,6 +187,7 @@ termQ =
       liftEq (liftEq eq) a m && liftEq (liftEq eq) b n && c == o
     liftEq eq (TDef h a b d e f g) (TDef t m n p q r s) =
       h == t && a == m && b == n && liftEq (liftEq eq) d p && liftEq eq e q && f == r && g == s 
+    liftEq eq (TAtom a b) (TAtom m n) = a == m && b == n
     liftEq eq (TConst a b c d e) (TConst m n o q r) =
       liftEq (liftEq eq) a m && b == n && liftEq (liftEq eq) c o && d == q && e == r
     liftEq eq (TApp a b c) (TApp m n o) =
@@ -211,6 +217,7 @@ termQ =
       TDef p n m ft b d i >>= f = TDef p n m (fmap (>>= f) ft) (b >>>= f) d i
       TNative n fn t d tl i >>= f = TNative n fn (fmap (fmap (>>= f)) t) d tl i
       TNativeVar n t i >>= f = TNativeVar n (fmap (>>= f) t) i
+      TAtom r i >>= _ = TAtom r i
       TConst d m c t i >>= f = TConst (fmap (>>= f) d) m (fmap (>>= f) c) t i
       TApp af as i >>= f = TApp (af >>= f) (map (>>= f) as) i
       TVar n i >>= f = (f n) { _tInfo = i }
@@ -246,6 +253,7 @@ termQ =
         TDef {..} -> Left "defn"
         TNative {..} -> Left "def"
         TNativeVar {..} -> Right _tNativeVarType
+        TAtom {..} -> Right TyAny
         TConst {..} -> Left $ "const:" <> _aName _tConstArg
         TApp {..} -> Left "app"
         TVar {..} -> Left "var"
@@ -295,6 +303,7 @@ termQ =
   abbrev TDef {..} = "<defn " ++ unpack _tDefName ++ ">"
   abbrev TNative {..} = "<native " ++ toString _tNativeName ++ ">"
   abbrev TNativeVar {..} = toString _tNativeVarName
+  abbrev TAtom {..} = "<atom>"
   abbrev TConst {..} = "<def " ++ show _tConstArg ++ ">"
   abbrev t@TApp {} = "<app " ++ abbrev (_tAppFun t) ++ ">"
   abbrev TBinding {} = "<binding>"
