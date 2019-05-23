@@ -4,12 +4,14 @@ module Seal.Lang.Clj.TH (
   exps, terms, expsF, termsF, 
   makeNativeModule, nativePat, nativeCall,
   defRNativeQ,
+  defRNative, funType,
   ) where
 
 import Universum hiding (Type)
 import qualified Universum.Unsafe as Unsafe
 import Seal.TH as TH
 import Text.Casing
+import Data.Aeson (Value)
 
 import Seal.Lang.Clj.Types.Exp
 import Seal.Lang.Clj.Types.Runtime (argsError)
@@ -90,11 +92,11 @@ defRNativeQ n tq exp = do
       caller = funD nCall [c, argsErrCall]
   letE [caller] [|defRNative $(TH.lift n) $(varE nCall) $(nativeFunType pts) "desc"|]
 
-
-argsErrCall :: ClauseQ
-argsErrCall = do
-  (ps, es) <- genPE "a" 2
-  clause ps (normalB $ appExp $ varE 'argsError : es) []
+  where
+    argsErrCall :: ClauseQ
+    argsErrCall = do
+      (ps, es) <- genPE "a" 2
+      clause ps (normalB $ appExp $ varE 'argsError : es) []
 
 nativeType :: Type -> ExpQ
 nativeType (ConT n)

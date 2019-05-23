@@ -39,7 +39,9 @@ module Seal.Lang.Clj.Types.Term
 import Seal.Prelude hiding ((.=))
 import Control.Arrow ((***))
 import Data.Functor.Classes
+import qualified Data.HashMap.Strict as HM
 import Bound
+import qualified Data.Aeson as JSON
 import Data.Text (Text,pack,unpack)
 import Data.Thyme
 import GHC.Generics (Generic)
@@ -68,3 +70,11 @@ pattern TLitBool :: Bool -> Term t
 pattern TLitBool b <- TLiteral (LBool b) _
 pattern TLitKeyword :: Text -> Term t
 pattern TLitKeyword s <- TLiteral (LKeyword s) _
+
+instance ToTerm JSON.Value where
+    toTerm (JSON.Object obj) = toTObject (TyAny) def $ fmap (\(k,v) -> (toTermLiteral (":" <> k), toTerm v)) (HM.toList obj)
+    toTerm (JSON.Array obj) = toTList (TyAny) def $ toTerm <$> toList obj
+    toTerm (JSON.String txt) = toTermLiteral txt
+    toTerm (JSON.Number n) = toTermLiteral $ toRational n
+    toTerm (JSON.Bool b) = toTermLiteral b
+    toTerm JSON.Null = toTermLiteral False

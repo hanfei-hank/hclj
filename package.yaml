@@ -21,6 +21,7 @@ description:         Please see the README on Github at <https://github.com/hanf
 
 dependencies:
 - Decimal >= 0.4.2 && < 0.6
+- aeson
 - algebraic-graphs >= 0.3 && < 0.4
 - ansi-wl-pprint >= 0.6.7.3 && < 0.7
 - attoparsec >= 0.13.0.2 && < 0.14

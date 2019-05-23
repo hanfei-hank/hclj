@@ -130,11 +130,11 @@ keyget :: Compile (Term Name)
 keyget = do
   body <- P.many term
   case body of
-    [k@(TLiteral (LKeyword _) _), o@TObject {}] ->
+    [k@(TLiteral (LKeyword _) _), o] ->
       TApp (TVar (Name "get" def) def) [o, k] <$> contextInfo
     [o@TObject {}, k@(TLiteral (LKeyword _) _)] ->
       TApp (TVar (Name "get" def) def) [o, k] <$> contextInfo
-    [k@(TLiteral (LKeyword _) _), o@TObject {}, defValue] ->
+    [k@(TLiteral (LKeyword _) _), o, defValue] ->
       TApp (TVar (Name "get" def) def) [o, k, defValue] <$> contextInfo
     [o@TObject {}, k@(TLiteral (LKeyword _) _), defValue] ->
       TApp (TVar (Name "get" def) def) [o, k, defValue] <$> contextInfo
