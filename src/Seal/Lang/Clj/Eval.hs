@@ -369,7 +369,7 @@ evalUse mn i = do
 -- | Make table of contract definitions for storage in namespace/RefStore.
 loadModule :: HasEval env => Module -> Scope n Term Name -> Info -> RIO env (HM.HashMap Text (Term Name))
 loadModule m@Module{..} bod1 mi = do
-  modDefs1 <-
+  modDefs1' <-
     case instantiate' bod1 of
       (TList bd _ _bi) -> do
         let doDef rs t = do
@@ -385,6 +385,7 @@ loadModule m@Module{..} bod1 mi = do
                   return ((dn,t):rs)
         HM.fromList <$> foldM doDef [] bd
       t -> evalError (_tInfo t) "Malformed contract"
+  modDefs1 <- traverse evaluateConst modDefs1'
   evaluatedDefs <- evaluateDefs mi modDefs1
   let md = ModuleData m $ filterOutPrivateDefs modDefs1 evaluatedDefs
   installModule md
@@ -402,6 +403,12 @@ filterOutPrivateDefs defs = HM.filterWithKey isNotPrivateDef
         Just (TDef PRIVATE _ _ _ _ _ _) -> False
         _ -> True
 
+evaluateConst :: HasEval env => Term Name -> RIO env (Term Name)
+evaluateConst TConst {..} = do
+    val <- evalConstVal _tConstVal
+    return $ TConst _tConstArg _tModule val _tMeta _tInfo
+
+evaluateConst t = return t
 -- | Definitions are transformed such that all free variables are resolved either to
 -- an existing ref in the refstore/namespace ('Right Ref'), or a symbol that must
 -- resolve to a definition in the contract ('Left String'). A graph is formed from
@@ -474,6 +481,11 @@ evalConsts (Ref r) = case r of
   _ -> Ref <$> traverse evalConsts r
 evalConsts r = return r
 
+evalConstVal :: HasEval env => ConstVal (Term Name) -> RIO env (ConstVal (Term Name))
+evalConstVal (CVRaw raw) = do
+    v <- enscope raw >>= reduce
+    return $ CVEval raw v
+evalConstVal c = return c
 
 deref :: HasEval env => Ref -> RIO env (Term Name)
 deref (Direct (TNativeVar n _ _)) = reduceNativeVar $ toText n
