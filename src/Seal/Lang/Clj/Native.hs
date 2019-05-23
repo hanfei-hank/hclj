@@ -123,8 +123,9 @@ ifDef = defNative "if" if' (funType a [("cond",tTyBool),("then",a),("else",a)])
   where
 
     if' i [cond,then',else'] = reduce cond >>= \case
-               TLiteral (LBool c) _ -> reduce (if c then then' else else')
-               t -> evalError' i $ "if: conditional not boolean: " ++ show t
+               TLiteral (LBool False) _ -> reduce else'
+               t -> reduce then'
+              --  t -> evalError' i $ "if: conditional not boolean: " ++ show t
     if' i as = argsError' i as
 
 -- do 
@@ -140,10 +141,9 @@ whenDef :: HasEval env => NativeDef env
 whenDef = defNative "when" when' (funType a []) "when"
   where
     when' i (cond:as) = reduce cond >>= \case
-        TLiteral (LBool c) _ 
-          | c == True -> do' i as
-          | otherwise -> return $ toTermLiteral False
-        t -> evalError' i $ "when: conditinal not boolean: " ++ show t
+        TLiteral (LBool False) _ -> return $ toTermLiteral False
+        t -> do' i as
+        -- t -> evalError' i $ "when: conditinal not boolean: " ++ show t
     when' i as = argsError' i as
 
 whileDef :: HasEval env => NativeDef env
