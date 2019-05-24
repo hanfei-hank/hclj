@@ -102,7 +102,8 @@ type ExpParse exp s a = StateT (ParseState exp s) (Parsec Void (Cursor exp)) a
 
 
 dbg :: (Show s, Show a, Ord (exp Info), Show (exp Info), ShowToken (exp Info)) => String -> ExpParse exp s a -> ExpParse exp s a
-dbg m (StateT f) = StateT $ \s -> MP.dbg m $ f s
+-- dbg m (StateT f) = StateT $ \s -> MP.dbg m $ f s
+dbg m (StateT f) = StateT f
 
 {-# INLINE strErr #-}
 strErr :: String -> ErrorItem t

@@ -161,7 +161,7 @@ atomDef :: HasEval env => NativeDef env
 atomDef = defRNative "atom" atom' (funType a []) "atom"
   where
     atom' i [v] = do
-        putStrLn $ "new atom" <> show v
+        -- putStrLn $ "new atom" <> show v
         ref <- newIORef v
         return $ TAtom ref def
     atom' i as = argsError i as
@@ -342,7 +342,7 @@ reduce' i [app@TApp {},initv,l] = reduce l >>= \l' -> case l' of
 reduce' i as = argsError' i as
 
 
-filter' :: HasEval env => NativeFun env
+filter' :: HasCallStack => HasEval env => NativeFun env
 filter' i [app@TApp {},l] = reduce l >>= \l' -> case l' of
            TList ls lt _ -> ((\b -> TList b lt def) . concat) <$>
                          forM ls (\a' -> do
@@ -493,8 +493,8 @@ buildKVPairs [_] = []
 buildKVPairs [k, v] = [(k, v)]
 buildKVPairs (k:v:kvs) = buildKVPairs [k, v] ++ buildKVPairs kvs
 
--- comp :: NativeFun 
--- comp i as@[appA@TApp {},appB@TApp {},v] = gasUnreduced i as $ do
+-- comp :: HasEval env => NativeFun env
+-- comp i as@[appA@TApp {},appB@TApp {},v] = do
 --   v' <- reduce v
 --   b' <- apply' appB [v']
 --   apply' appA [b']

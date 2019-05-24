@@ -8,6 +8,7 @@ module Seal.Lang.Clj.TH (
   ) where
 
 import Universum hiding (Type)
+import Data.Decimal
 import qualified Universum.Unsafe as Unsafe
 import Seal.TH as TH
 import Text.Casing
@@ -76,7 +77,8 @@ nativePat :: PatQ -> Type -> PatQ
 nativePat v (ConT n)
   | n == ''Text = [p| TLiteral (LString $v) _ |]
   | n == ''Integer    = [p| TLiteral (LInteger $v) _ |]
-nativePat _ t = fail "unsupport native param type"
+  | n == ''Decimal = [p| TLiteral (LDecimal $v) _ |]
+nativePat _ t = fail $ "unsupport native param type" <> show t
 
 nativeCall :: TH.Name -> ExpQ
 nativeCall f = do
@@ -102,6 +104,7 @@ nativeType :: Type -> ExpQ
 nativeType (ConT n)
   | n == ''Text = [|tTyString|]
   | n == ''Integer    = [| tTyInteger|]
+  | n == ''Decimal = [| tTyDecimal |]
   | otherwise = fail $ "unsupported native type :" <> show n
 
 nativeReturnType :: Type -> ExpQ

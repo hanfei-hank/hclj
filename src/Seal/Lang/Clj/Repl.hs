@@ -59,7 +59,7 @@ eval (TModule m@Module{..} bod i) = do
   
 eval t = do
   tref <- enscope t
-  putStrLn $ show tref
+  -- putStrLn $ show tref
   reduce tref
 
 evalString :: String -> Repl ()
