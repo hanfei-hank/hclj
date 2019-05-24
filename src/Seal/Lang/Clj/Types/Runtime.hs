@@ -118,8 +118,9 @@ class HasEval env where
   modifyCallStack f = view typed >>= \ref -> modifyIORef ref f
 
   -- report error, with category
-  throwEvalErr :: KnownSymbol n => Proxy n -> Info -> Text -> RIO env a
+  throwEvalErr :: HasCallStack => KnownSymbol n => Proxy n -> Info -> Text -> RIO env a
   throwEvalErr _ _ m = throwString $ toString m
+  {-# INLINE throwEvalErr #-}
 
   reduceNativeVar :: Text -> RIO env (Term Name)
 
@@ -139,7 +140,7 @@ call s act = do
 
 
 
-throwArgsError :: HasEval env => FunApp -> [Term Name] -> Text -> RIO env a
+throwArgsError :: HasCallStack => HasEval env => FunApp -> [Term Name] -> Text -> RIO env a
 throwArgsError FunApp {..} args s = throwEvalErr etArgsError _faInfo $ toText $
   toString s ++ ", received [" ++ intercalate "," (map abbrev args) ++ "] for " ++
             showFunTypes _faTypes
@@ -151,7 +152,7 @@ evalError' :: HasEval env => FunApp -> String -> RIO env a
 evalError' = evalError . _faInfo
 
 
-argsError :: HasEval env => FunApp -> [Term Name] -> RIO env a
+argsError :: HasCallStack => HasEval env => FunApp -> [Term Name] -> RIO env a
 argsError i as = throwArgsError i as "Invalid arguments"
 
 argsError' :: HasEval env => FunApp -> [Term Ref] -> RIO env a

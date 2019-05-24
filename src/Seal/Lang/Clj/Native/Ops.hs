@@ -416,7 +416,7 @@ defCmp o f =
       ex "\"abc\"" "\"def\""
 
 -- | Monomorphic compare.
-cmp :: HasEval env => (Ordering -> Bool) -> RNativeFun env
+cmp :: HasCallStack => HasEval env => (Ordering -> Bool) -> RNativeFun env
 cmp cmpFun fi terms@(TLiteral a _ : as@(_ : _)) = do
   c <- go a as
   return $ toTerm $ toLiteral c

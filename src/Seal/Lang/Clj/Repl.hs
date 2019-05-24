@@ -78,7 +78,7 @@ evalFile path = do
   code <- toString <$> readFileUtf8 path
   evalString code
   -- call run method
-  evalString "(run)"
+  -- evalString "(run)"
 
 evalTerms :: [Term Name] -> Repl ()
 evalTerms ts =
