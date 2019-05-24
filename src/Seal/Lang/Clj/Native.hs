@@ -21,11 +21,13 @@ module Seal.Lang.Clj.Native
     ) where
 
 import Control.Lens hiding (parts,Fold,contains)
+import Prelude (read)
 import Seal.Prelude hiding (contains, identity, list)
 import qualified Seal.Prelude.Unsafe as Unsafe
 import Unsafe.Coerce
 
 import Data.Char (isHexDigit, digitToInt)
+import Data.Decimal
 import qualified Data.Foldable as Foldable
 import Data.List (elemIndex, lookup)
 import qualified Data.Attoparsec.Text as AP
@@ -293,6 +295,10 @@ langDefs =
       funType tTyInteger [("base", tTyInteger), ("str-val", tTyString)])
      "Compute the integer value of STR-VAL in base 10, or in BASE if specified. STR-VAL must be <= 128 \
      \chars in length and BASE must be between 2 and 16. `(str-to-int 16 \"123456\")` `(str-to-int \"abcdef123456\")`"
+
+     ,defRNative "str-to-decimal" strToDecimal
+     (funType tTyDecimal [("str-val", tTyString)])
+     "to decimal"
     ])
     where b = mkTyVar "b" []
           c = mkTyVar "c" []
@@ -623,6 +629,12 @@ strToInt i as =
           Right n -> return (toTerm $ toLiteral n)
         else evalError' i $ "Invalid input: unsupported string length: " ++ (toString txt)
       else evalError' i $ "Invalid input: supplied string is not hex: " ++ (toString txt)
+
+strToDecimal :: HasEval env => RNativeFun env
+strToDecimal i as =
+  case as of
+    [TLitString s] -> return $ toTermLiteral $ Prelude.read @Decimal $ toString s
+    _ -> argsError i as
 
 -- txHash :: RNativeFun 
 -- txHash _ [] = (tStr . txHash1) <$> view eeHash
