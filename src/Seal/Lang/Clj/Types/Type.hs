@@ -108,12 +108,14 @@ instance Show PrimType where
 instance Pretty PrimType where pretty = text . show
 
 data SchemaType =
+  TyTable |
   TyObject |
   TyBinding
   deriving (Eq,Ord,Generic)
 
 instance NFData SchemaType
 instance Show SchemaType where
+  show TyTable = "table"
   show TyObject = unpack tyObject
   show TyBinding = "binding"
 instance Pretty SchemaType where pretty = text . show
