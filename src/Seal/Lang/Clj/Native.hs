@@ -130,6 +130,18 @@ ifDef = defNative "if" if' (funType a [("cond",tTyBool),("then",a),("else",a)])
               --  t -> evalError' i $ "if: conditional not boolean: " ++ show t
     if' i as = argsError' i as
 
+ifNotDef :: HasEval env => NativeDef env
+ifNotDef = defNative "if-not" ifNot' (funType a [("cond",tTyBool),("then",a),("else",a)])
+  "Test COND. If false, evaluate THEN. Otherwise, evaluate ELSE. \
+  \`(if-not (= (+ 2 2) 4) \"Sanity prevails\" \"Chaos reigns\")`"
+  where
+
+    ifNot' i [cond,then',else'] = reduce cond >>= \case
+               TLiteral (LBool True) _ -> reduce else'
+               t -> reduce then'
+              --  t -> evalError' i $ "if: conditional not boolean: " ++ show t
+    ifNot' i as = argsError' i as
+
 -- do 
 do' i = go
   where
@@ -186,7 +198,7 @@ resetAtomDef = defRNative "reset!" reset' (funType a []) "reset"
 langDefs :: HasEval env => NativeModule env
 langDefs =
     ("General",[
-     ifDef,doDef,whenDef,whileDef
+     ifDef,ifNotDef,doDef,whenDef,whileDef
     ,atomDef, derefDef, resetAtomDef
     ,defNative "map" map'
      (funType (TyList a) [("app",lam b a),("list",TyList b)])
