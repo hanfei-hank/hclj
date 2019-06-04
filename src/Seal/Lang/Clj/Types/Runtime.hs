@@ -107,7 +107,7 @@ class HasEval env where
 
   modifyRefState :: (RefState -> RefState) -> RIO env ()
   default modifyRefState :: HasType (IORef RefState) env => (RefState -> RefState) -> RIO env ()
-  modifyRefState f = view typed >>= \ref -> modifyIORef ref f
+  modifyRefState f = view typed >>= \ref -> modifyIORef' ref f
 
   getCallStack :: RIO env [StackFrame]
   default getCallStack :: HasType (IORef [StackFrame]) env => RIO env [StackFrame]
@@ -115,7 +115,7 @@ class HasEval env where
 
   modifyCallStack :: ([StackFrame] -> [StackFrame]) -> RIO env ()
   default modifyCallStack :: HasType (IORef [StackFrame]) env => ([StackFrame] -> [StackFrame]) -> RIO env ()
-  modifyCallStack f = view typed >>= \ref -> modifyIORef ref f
+  modifyCallStack f = view typed >>= \ref -> modifyIORef' ref f
 
   -- report error, with category
   throwEvalErr :: HasCallStack => KnownSymbol n => Proxy n -> Info -> Text -> RIO env a

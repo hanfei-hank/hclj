@@ -177,7 +177,7 @@ derefDef = defRNative "deref" deref' (funType a []) "deref"
 resetAtomDef :: HasEval env => NativeDef env
 resetAtomDef = defRNative "reset!" reset' (funType a []) "reset"
   where
-    reset' i [TAtom ref _, v] = do
+    reset' i [TAtom ref _, !v] = do
         putStrLn $ "reset " <> show v
         writeIORef ref v
         return v
@@ -341,10 +341,12 @@ empty' i as = argsError i as
 
 
 reduce' :: HasEval env => NativeFun env
-reduce' i [app@TApp {},initv,l] = reduce l >>= \l' -> case l' of
+reduce' i [app@TApp {},initv,l] = reduce l >>= \case
            TList ls _ _ -> reduce initv >>= \initv' ->
-                         foldM (\r a' -> apply' app [r,a']) initv' ls
+                         foldM f initv' ls
            t -> evalError' i $ "fold: expecting list: " ++ abbrev t
+  where
+    f !r !a' = apply' app [r,a']
 reduce' i as = argsError' i as
 
 

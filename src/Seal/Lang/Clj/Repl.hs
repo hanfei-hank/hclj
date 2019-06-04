@@ -40,12 +40,12 @@ type Repl a = RIO ReplEnv a
 loadNativeModule :: NativeModule ReplEnv -> Repl ()
 loadNativeModule m = do
     ref <- asks eRefStore 
-    modifyIORef ref (<> RefStore (moduleToMap m) mempty)
+    modifyIORef' ref (<> RefStore (moduleToMap m) mempty)
 
 defNativeVar :: Text -> Type (Term Name) -> Repl ()
 defNativeVar n t = do
     ref <- asks eRefStore
-    modifyIORef ref $ installNative n $ Direct $ TNativeVar (NativeDefName n) t def 
+    modifyIORef' ref $ installNative n $ Direct $ TNativeVar (NativeDefName n) t def 
 
 installNativeVarReducer :: (Text -> Repl (Term Name)) -> Repl ()
 installNativeVarReducer r = do
