@@ -160,6 +160,15 @@ whenDef = defNative "when" when' (funType a []) "when"
         -- t -> evalError' i $ "when: conditinal not boolean: " ++ show t
     when' i as = argsError' i as
 
+whenNotDef :: HasEval env => NativeDef env
+whenNotDef = defNative "when-not" whenNot' (funType a []) "when-not"
+  where
+    whenNot' i (cond:as) = reduce cond >>= \case
+        TLiteral (LBool True) _ -> return $ toTermLiteral False
+        t -> do' i as
+        -- t -> evalError' i $ "when: conditinal not boolean: " ++ show t
+    whenNot' i as = argsError' i as
+
 whileDef :: HasEval env => NativeDef env
 whileDef = defNative "while" while' (funType a []) "while"
   where
@@ -198,7 +207,7 @@ resetAtomDef = defRNative "reset!" reset' (funType a []) "reset"
 langDefs :: HasEval env => NativeModule env
 langDefs =
     ("General",[
-     ifDef,ifNotDef,doDef,whenDef,whileDef
+     ifDef,ifNotDef,doDef,whenDef,whenNotDef,whileDef
     ,atomDef, derefDef, resetAtomDef
     ,defNative "map" map'
      (funType (TyList a) [("app",lam b a),("list",TyList b)])
