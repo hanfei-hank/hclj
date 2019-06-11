@@ -433,7 +433,6 @@ lookupObj idx ls = case lookup (unsetInfo idx) (map (first unsetInfo) ls) of
 
 
 updateObj :: (Eq n) => [(Term n, Term n)]-> [(Term n, Term n)] -> [(Term n, Term n)]
-updateObj _ [] = []
 updateObj [] ps = ps
 updateObj [p] ps = case elemIndex ((unsetInfo . fst) p) (map (unsetInfo . fst) ps) of
     Just n -> take n ps ++ [p] ++ drop (n + 1) ps
