@@ -199,7 +199,7 @@ resetAtomDef :: HasEval env => NativeDef env
 resetAtomDef = defRNative "reset!" reset' (funType a []) "reset"
   where
     reset' i [TAtom ref _, !v] = do
-        putStrLn $ "reset " <> show v
+        -- putStrLn $ "reset " <> show v
         writeIORef ref v
         return v
     reset' i as = argsError i as
