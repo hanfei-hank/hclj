@@ -102,6 +102,7 @@ defRNativeQ n tq exp = do
 
 nativeType :: Type -> ExpQ
 nativeType (ConT n)
+  | n == ''Bool = [|tTyBool|]
   | n == ''Text = [|tTyString|]
   | n == ''Integer    = [| tTyInteger|]
   | n == ''Decimal = [| tTyDecimal |]
